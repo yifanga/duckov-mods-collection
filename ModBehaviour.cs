@@ -39,7 +39,7 @@ namespace AutoFilterKeyAndFormula
                 Debug.LogError("Failed to find patching methods");
             }
 
-             // 直接应用补丁
+            // 直接应用补丁
             var originalKeyMethod = AccessTools.Method(typeof(MasterKeysRegisterView), "OnOpen");
             var postfixKeyMethod = AccessTools.Method(typeof(CustomFilters), "OnKeyOpenPostfix");
 
@@ -60,14 +60,38 @@ namespace AutoFilterKeyAndFormula
             if (originalBitcoinMethod != null && postfixBitcoinMethod != null)
             {
                 harmony.Patch(originalBitcoinMethod, postfix: new HarmonyMethod(postfixBitcoinMethod));
-                Debug.Log("Successfully patched MasterKeysRegisterView.OnOpen");
+                Debug.Log("Successfully patched BitcoinMinerView.OnOpen");
             }
             else
             {
                 Debug.LogError("Failed to find patching methods");
             }
 
-            // ItemDecomposeView itemDecomposeView;
+            // ItemDecomposeView
+            var originalDecomposeMethod = AccessTools.Method(typeof(ItemDecomposeView), "OnOpen");
+            var postfixDecomposeMethod = AccessTools.Method(typeof(CustomFilters), "OnDecomposeOpenPostfix");
+            if (originalDecomposeMethod != null && postfixDecomposeMethod != null)
+            {
+                harmony.Patch(originalDecomposeMethod, postfix: new HarmonyMethod(postfixDecomposeMethod));
+                Debug.Log("Successfully patched ItemDecomposeView.OnOpen");
+            }
+            else
+            {
+                Debug.LogError("Failed to find patching methods");
+            }
+
+            // ItemRepairView
+            var originalRepairMethod = AccessTools.Method(typeof(ItemRepairView), "OnOpen");
+            var postfixRepairMethod = AccessTools.Method(typeof(CustomFilters), "OnRepairOpenPostfix");
+            if (originalRepairMethod != null && postfixRepairMethod != null)
+            {
+                harmony.Patch(originalRepairMethod, postfix: new HarmonyMethod(postfixRepairMethod));
+                Debug.Log("Successfully patched ItemRepairView.OnOpen");
+            }
+            else
+            {
+                Debug.LogError("Failed to find patching methods");
+            }
 
         }
         void OnDestroy()

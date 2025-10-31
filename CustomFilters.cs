@@ -63,7 +63,6 @@ namespace AutoFilterKeyAndFormula
 		{
 			try
 			{
-
 				// 使用反射获取私有字段
 				var inventoryDisplayField = typeof(MasterKeysRegisterView).GetField("inventoryDisplay",
 					BindingFlags.NonPublic | BindingFlags.Instance);
@@ -153,6 +152,91 @@ namespace AutoFilterKeyAndFormula
 		{
 			return (Item e) => ((bool)e && (e.Tags.Contains("ComputerParts_GPU") || e.TypeID.Equals(388))) ? true : false;
 		}
+
+
+		public static void OnDecomposeOpenPostfix(ItemDecomposeView __instance)
+		{
+			try
+			{
+				// 使用反射获取私有字段
+				var playerStorageInventoryDisplayField = typeof(ItemDecomposeView).GetField("storageDisplay",
+					BindingFlags.NonPublic | BindingFlags.Instance);
+
+				if (playerStorageInventoryDisplayField == null)
+				{
+					Debug.LogError("Failed to find inventory display fields");
+					return;
+				}
+				// 获取InventoryDisplay对象
+				var playerStorageInventoryDisplay = playerStorageInventoryDisplayField.GetValue(__instance) as InventoryDisplay;
+
+				if (playerStorageInventoryDisplay == null)
+				{
+					Debug.LogError("Failed to get inventory display instances");
+					return;
+				}
+
+				// 应用自定义过滤器
+				Func<Item, bool> filter = DecomposeFilter();
+				// inventoryDisplay.SetFilter(filter);
+				playerStorageInventoryDisplay.SetFilter(filter);
+
+				Debug.Log("Custom formula filters applied successfully");
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"Error in CustomFormulaFilters: {ex}");
+			}
+		}
+
+
+		private static Func<Item, bool> DecomposeFilter()
+		{
+			return (Item e) => ((bool)e && DecomposeDatabase.CanDecompose(e)) ? true : false;
+		}
+
+
+		public static void OnRepairOpenPostfix(ItemRepairView __instance)
+		{
+			try
+			{
+				// 使用反射获取私有字段
+				var inventoryDisplayField = typeof(ItemRepairView).GetField("inventoryDisplay",
+					BindingFlags.NonPublic | BindingFlags.Instance);
+
+				if (inventoryDisplayField == null)
+				{
+					Debug.LogError("Failed to find inventory display fields");
+					return;
+				}
+				// 获取InventoryDisplay对象
+				var playerStorageInventoryDisplay = inventoryDisplayField.GetValue(__instance) as InventoryDisplay;
+
+				if (playerStorageInventoryDisplay == null)
+				{
+					Debug.LogError("Failed to get inventory display instances");
+					return;
+				}
+
+				// 应用自定义过滤器
+				Func<Item, bool> filter = RepairFilter();
+				// inventoryDisplay.SetFilter(filter);
+				playerStorageInventoryDisplay.SetFilter(filter);
+
+				Debug.Log("Custom formula filters applied successfully");
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"Error in CustomFormulaFilters: {ex}");
+			}
+		}
+
+
+		private static Func<Item, bool> RepairFilter()
+		{
+			return (Item e) => ((bool)e && e.Repairable) ? true : false;
+		}
+
 
 
 
