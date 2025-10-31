@@ -59,6 +59,13 @@ namespace TagInventoryWeight
             UpdateWeightText(__instance);
         }
 
+        [HarmonyPatch(typeof(WeightBarComplex), "AnimateMainBar", typeof(int))]
+        [HarmonyPostfix]
+        private static void Postfix_AnimateMainBar(WeightBarComplex __instance)
+        {
+            Debug.Log("TagInventoryWeight Postfix_AnimateMainBar!!!");
+            UpdateWeightText(__instance);
+        }
 
         private static void CreateStatusText(WeightBarComplex instance)
         {
@@ -94,13 +101,13 @@ namespace TagInventoryWeight
 
                 // 设置位置偏移
                 rect.anchoredPosition = new Vector2(
-                    barRect.rect.width * 1.3f,
+                    barRect.rect.width * 1.4f,
                     0
                 );
 
             }
             // 设置尺寸
-            rect.sizeDelta = new Vector2(600, 100);
+            rect.sizeDelta = new Vector2(400, 60);
 
             textObj.SetActive(true);
             // 添加调试标记
@@ -132,7 +139,7 @@ namespace TagInventoryWeight
             float currentWeight = target.CharacterItem.TotalWeight;
 
             // 获取最大重量（使用反射）
-            float maxWeight = GetMaxWeight();
+            float maxWeight = target.MaxWeight;
             float lightWeight = maxWeight * 0.25f;
             float middleWeight = maxWeight * 0.5f;
             float superHeavyWeight = maxWeight * 0.75f;
@@ -204,10 +211,5 @@ namespace TagInventoryWeight
 
         }
 
-        // 使用反射获取私有属性 MaxWeight 的值
-        private static float GetMaxWeight()
-        {
-            return GetTarget()?.MaxWeight ?? 0f;
-        }
     }
 }

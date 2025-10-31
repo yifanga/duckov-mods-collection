@@ -15,6 +15,8 @@ namespace TagInventoryWeight
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
 
+        WeightBarHUD hud;
+
         private const string HarmonyId = "duckovMods.TagInventoryWeight";
 
         private Harmony harmony;
