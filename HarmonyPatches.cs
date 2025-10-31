@@ -1,6 +1,8 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Duckov.UI;
 using HarmonyLib;
+using ItemStatsSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,201 +16,94 @@ namespace TagInventoryWeight
     public static class WeightBarComplex_Patch
     {
 
-        private const string TEXT_OBJECT_NAME = "CustomWeightStatusText";
+        // 存储上次的重量值用于比较
+        // 使用 ConditionalWeakTable 存储每个实例的状态
+        private static readonly ConditionalWeakTable<WeightBarHUD, InstanceState> stateTable =
+            new ConditionalWeakTable<WeightBarHUD, InstanceState>();
 
-        [HarmonyPatch(typeof(WeightBarComplex), "OnEnable")]
+        // 每个实例的状态类
+        private class InstanceState
+        {
+            public float LastWeight { get; set; } = -1f;
+            public float LastMaxWeight { get; set; } = -1f;
+        }
+
+        [HarmonyPatch(typeof(WeightBarHUD), "Update")]
         [HarmonyPostfix]
-        private static void Postfix_OnEnable(WeightBarComplex __instance)
+        private static void ModifyWeightText(WeightBarHUD __instance)
         {
-            // 确保只创建一次文本
-            var text = FindTag(__instance);
-            if (text != null)
-            {
-                text.SetActive(true);
-                return;
-            }
-            else
-            {
-                // 创建状态文本
-                CreateStatusText(__instance);
 
-                // 初始更新文本
-                UpdateWeightText(__instance);
-            }
+            // 获取当前实例的状态（如果不存在则创建）
+            InstanceState state = stateTable.GetValue(__instance, inst => new InstanceState());
 
+            // 获取私有字段值
+            float weight = Traverse.Create(__instance).Field("weight").GetValue<float>();
+            float maxWeight = Traverse.Create(__instance).Field("maxWeight").GetValue<float>();
+
+            // 检查重量是否变化
+            bool weightChanged = !Mathf.Approximately(weight, state.LastWeight) ||
+                                !Mathf.Approximately(maxWeight, state.LastMaxWeight);
+
+            // 只在重量变化时更新
+            if (weightChanged)
+            {
+                // 更新存储的重量值
+                state.LastWeight = weight;
+                state.LastMaxWeight = maxWeight;
+
+                // 只在超重时添加说明
+                string originalText = string.Format(__instance.weightTextFormat, weight, maxWeight);
+                string extraText = calculateTextByWeight(weight, maxWeight);
+                __instance.weightText.text = $"{originalText} ({extraText})";
+                RectTransform rectTransform = (RectTransform)__instance.transform;
+                if (rectTransform.sizeDelta.x == 200 && rectTransform.sizeDelta.y == 10)
+                {
+                    rectTransform.sizeDelta = new Vector2(280, 10);
+                }
+            }
         }
 
-        [HarmonyPatch(typeof(WeightBarComplex), "OnDisable")]
-        [HarmonyPostfix]
 
-        private static void Postfix_OnDisable(WeightBarComplex __instance)
+        private static string calculateTextByWeight(float weight, float maxWeight)
         {
-            // 销毁文本对象
-            var text = FindTag(__instance);
-            if (text != null)
-            {
-                text.SetActive(false);
-            }
-        }
-
-        [HarmonyPatch(typeof(WeightBarComplex), "RefreshMarkStatus")]
-        [HarmonyPostfix]
-        private static void Postfix_RefreshMarkStatus(WeightBarComplex __instance)
-        {
-            Debug.Log("TagInventoryWeight Postfix_RefreshMarkStatus!!!");
-            UpdateWeightText(__instance);
-        }
-
-        [HarmonyPatch(typeof(WeightBarComplex), "AnimateMainBar", typeof(int))]
-        [HarmonyPostfix]
-        private static void Postfix_AnimateMainBar(WeightBarComplex __instance)
-        {
-            Debug.Log("TagInventoryWeight Postfix_AnimateMainBar!!!");
-            UpdateWeightText(__instance);
-        }
-
-        private static void CreateStatusText(WeightBarComplex instance)
-        {
-            // 创建文本对象作为重量条的兄弟对象
-            GameObject textObj = new GameObject(TEXT_OBJECT_NAME);
-
-            // 设置层级关系：重量条次级
-            textObj.transform.SetParent(instance.transform);
-
-
-            // 添加TextMeshPro组件
-            var text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = "重量状态";
-            text.fontSize = 16;
-            text.alignment = TextAlignmentOptions.Left;
-            text.enableAutoSizing = true;
-            text.autoSizeTextContainer = true;
-            text.color = Color.white;
-            text.fontStyle = FontStyles.Bold;
-            text.outlineWidth = 0.1f;
-            text.outlineColor = Color.black;
-
-            // 设置位置在重量条右侧
-            RectTransform rect = textObj.GetComponent<RectTransform>();
-            RectTransform barRect = (RectTransform)instance.transform.parent;
-
-            if (barRect != null)
-            {
-                // 使用锚点定位
-                rect.anchorMin = new Vector2(0, 0.5f);
-                rect.anchorMax = new Vector2(0, 0.5f);
-                rect.pivot = new Vector2(0, 0.5f);
-
-                // 设置位置偏移
-                rect.anchoredPosition = new Vector2(
-                    barRect.rect.width * 1.4f,
-                    0
-                );
-
-            }
-            // 设置尺寸
-            rect.sizeDelta = new Vector2(400, 60);
-
-            textObj.SetActive(true);
-            // 添加调试标记
-            // textObj.AddComponent<WeightStatusDebugMarker>();
-        }
-
-        private static void UpdateWeightText(WeightBarComplex instance)
-        {
-            // 查找文本组件
-            var textObj = FindTag(instance);
-            if (textObj == null)
-            {
-                Debug.LogWarning("WeightBarComplex_Patch: 未找到文本组件，尝试重新创建");
-                CreateStatusText(instance);
-                textObj = FindTag(instance);
-                if (textObj == null) return;
-            }
-
-            var text = textObj.GetComponent<TextMeshProUGUI>();
-            // 获取目标角色
-            CharacterMainControl? target = GetTarget();
-            if (target == null)
-            {
-                text.text = "<color=#FF0000>目标角色为空</color>";
-                return;
-            }
-
             // 获取当前重量
-            float currentWeight = target.CharacterItem.TotalWeight;
+            float currentWeight = weight;
 
             // 获取最大重量（使用反射）
-            float maxWeight = target.MaxWeight;
             float lightWeight = maxWeight * 0.25f;
             float middleWeight = maxWeight * 0.5f;
             float superHeavyWeight = maxWeight * 0.75f;
 
-            // 计算超重信息
-            float overweightAmount = currentWeight - maxWeight;
-
-            float remainingCapacity = maxWeight - currentWeight;
-
             // 更新文本内容
             if (currentWeight > maxWeight)
             {
-                text.text = $"<color=#FF0000>超重: {currentWeight - maxWeight:F1}kg</color>";
+                return $"超重{currentWeight - maxWeight:0.#}kg";
             }
             else if (currentWeight > maxWeight * 0.9f) // 接近超重时
             {
-                text.text = $"<color=#FFFF00>距超重: {maxWeight - currentWeight:F1}kg</color>";
+
+                return $"距超重{maxWeight - currentWeight:0.#}kg";
             }
             else if (currentWeight > superHeavyWeight) // >=负重时
             {
-                text.text = $"<color=#FFFF00>负重: {currentWeight - superHeavyWeight:F1}kg</color>";
+                return $"负重{currentWeight - superHeavyWeight:0.#}kg";
             }
             else if (currentWeight > middleWeight) // <=负重时
             {
-                text.text = $"距负重: {superHeavyWeight - currentWeight:F1}kg";
+                return $"距负重{superHeavyWeight - currentWeight:0.#}kg";
             }
             else if (currentWeight > lightWeight) // >=轻盈时
             {
-                text.text = $"距轻盈: {currentWeight - lightWeight:F1}kg";
+                return $"距轻盈{currentWeight - lightWeight:0.#}kg";
             }
             else if (currentWeight < lightWeight) // >=轻盈时
             {
-                text.text = $"<color=#00FF00>轻盈: {lightWeight - currentWeight:F1}kg</color>";
+                return $"轻盈: {lightWeight - currentWeight:0.#}kg";
             }
             else
             {
-                text.text = $"<color=#00FF00>剩余容量: {currentWeight:F1}kg</color>";
+                return $"剩余容量{currentWeight:0.#}kg";
             }
-
-            // 强制更新渲染
-            // text.ForceMeshUpdate();
-            textObj.SetActive(true);
-            Debug.Log($"WeightBarComplex_Patch: 更新文本: {text.text}");
-        }
-
-        // 辅助方法：查找文本组件
-        private static GameObject? FindTag(WeightBarComplex instance)
-        {
-            // 在重量条的兄弟对象中查找
-            if (instance.transform != null)
-            {
-                foreach (Transform child in instance.transform)
-                {
-                    if (child.name == TEXT_OBJECT_NAME)
-                    {
-                        return child.gameObject;
-                    }
-                }
-            }
-
-            // 在整个场景中查找（备用）
-            return null;
-        }
-
-        private static CharacterMainControl? GetTarget()
-        {
-            // 尝试直接访问属性（如果编译器允许）
-            return LevelManager.Instance?.MainCharacter;
-
         }
 
     }
