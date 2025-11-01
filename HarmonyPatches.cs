@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Duckov.UI;
 using HarmonyLib;
 using ItemStatsSystem;
+using SodaCraft.Localizations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -53,14 +54,25 @@ namespace TagInventoryWeight
 
                 // 只在超重时添加说明
                 string originalText = string.Format(__instance.weightTextFormat, weight, maxWeight);
-                string extraText = calculateTextByWeight(weight, maxWeight);
-                __instance.weightText.text = $"{originalText} ({extraText})";
+                string extraText = getWeightTextByLang(weight, maxWeight);
+                __instance.weightText.text = $"{originalText} {extraText}";
                 RectTransform rectTransform = (RectTransform)__instance.transform;
                 if (rectTransform.sizeDelta.x == 200 && rectTransform.sizeDelta.y == 10)
                 {
                     rectTransform.sizeDelta = new Vector2(280, 10);
                 }
             }
+        }
+
+        private static string getWeightTextByLang(float weight, float maxWeight)
+        {
+            var currentLanguage = LocalizationManager.CurrentLanguage;
+            if (UnityEngine.SystemLanguage.ChineseSimplified.Equals(currentLanguage)
+            || UnityEngine.SystemLanguage.ChineseTraditional.Equals(currentLanguage))
+            {
+                return calculateTextByWeight(weight, maxWeight);
+            }
+            return calculateOtherTextByWeight(weight, maxWeight);
         }
 
 
@@ -77,32 +89,74 @@ namespace TagInventoryWeight
             // 更新文本内容
             if (currentWeight > maxWeight)
             {
-                return $"超重{currentWeight - maxWeight:0.#}kg";
+                return $"(超重{currentWeight - maxWeight:0.#}kg)";
             }
             else if (currentWeight > maxWeight * 0.9f) // 接近超重时
             {
 
-                return $"距超重{maxWeight - currentWeight:0.#}kg";
+                return $"(距超重{maxWeight - currentWeight:0.#}kg)";
             }
             else if (currentWeight > superHeavyWeight) // >=负重时
             {
-                return $"负重{currentWeight - superHeavyWeight:0.#}kg";
+                return $"(负重{currentWeight - superHeavyWeight:0.#}kg)";
             }
             else if (currentWeight > middleWeight) // <=负重时
             {
-                return $"距负重{superHeavyWeight - currentWeight:0.#}kg";
+                return $"(距负重{superHeavyWeight - currentWeight:0.#}kg)";
             }
             else if (currentWeight > lightWeight) // >=轻盈时
             {
-                return $"距轻盈{currentWeight - lightWeight:0.#}kg";
+                return $"(距轻盈{currentWeight - lightWeight:0.#}kg)";
             }
-            else if (currentWeight < lightWeight) // >=轻盈时
+            else if (currentWeight < lightWeight) // <轻盈时
             {
-                return $"轻盈: {lightWeight - currentWeight:0.#}kg";
+                return $"(轻盈{lightWeight - currentWeight:0.#}kg)";
             }
             else
             {
-                return $"剩余容量{currentWeight:0.#}kg";
+                return $"(剩余容量{currentWeight:0.#}kg)";
+            }
+        }
+
+        private static string calculateOtherTextByWeight(float weight, float maxWeight)
+        {
+            // 获取当前重量
+            float currentWeight = weight;
+
+            // 获取最大重量（使用反射）
+            float lightWeight = maxWeight * 0.25f;
+            float middleWeight = maxWeight * 0.5f;
+            float superHeavyWeight = maxWeight * 0.75f;
+
+            // 更新文本内容
+            if (currentWeight > maxWeight)
+            {
+                return $"[ | | ]←{currentWeight - maxWeight:0.#}kg";
+            }
+            else if (currentWeight > maxWeight * 0.9f) // 接近超重时
+            {
+
+                return $"[ | | {maxWeight - currentWeight:0.#}kg→]";
+            }
+            else if (currentWeight > superHeavyWeight) // >=负重时
+            {
+                return $"[ | |←{currentWeight - superHeavyWeight:0.#}kg ]";
+            }
+            else if (currentWeight > middleWeight) // <=负重时
+            {
+                return $"[ | {superHeavyWeight - currentWeight:0.#}kg→| ]";
+            }
+            else if (currentWeight > lightWeight) // >=轻盈时
+            {
+                return $"[ |←{currentWeight - lightWeight:0.#}kg | ]";
+            }
+            else if (currentWeight < lightWeight) // <轻盈时
+            {
+                return $"[ {lightWeight - currentWeight:0.#}kg→| | ]";
+            }
+            else
+            {
+                return $"[ {currentWeight:0.#}kg→]";
             }
         }
 
