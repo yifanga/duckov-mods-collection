@@ -19,6 +19,9 @@
     <Reference Include="$(DuckovPath)\Duckov_Data\Managed\SodaLocalization.dll">
       <Private>False</Private>
     </Reference>
+    <Reference Include="$(DuckovPath)\Duckov_Data\Managed\UniTask*">
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.1" />

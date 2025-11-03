@@ -10,6 +10,8 @@ using System.Reflection;
 using Duckov.MasterKeys.UI;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
+using Unity.VisualScripting;
 
 namespace LootNearbyItem
 {
@@ -17,20 +19,27 @@ namespace LootNearbyItem
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
 
-        private const string HarmonyId = "duckovMods.TagInventoryWeight";
+        private float lastHKeyPressTime = 0f;
+        private const float KEY_DEBOUNCE_TIME = 0.5f; // 防抖时间500毫秒
 
-        // private Harmony harmony;
+        private const string HarmonyId = "duckovMods.TagInventoryWeight";
 
         void OnEnable()
         {
-            InteractHUD h;
-            InteractSelectionHUD a;
-            InteractablePickup p;
+            // InteractHUD h;
+            // InteractSelectionHUD a;
+            // InteractablePickup p;
             // Debug.Log("TagInventoryWeight Loaded!!!");
             // // 创建Harmony实例
             // harmony = new Harmony(HarmonyId);
             // // 直接应用补丁
             // harmony.PatchAll(Assembly.GetExecutingAssembly());
+            // LootBoxLoader pppp;
+            // LootBoxLoader ccc;
+            LootView ll;
+            // InteractableLootbox bb;
+            // UniTask ttt;
+
 
         }
 
@@ -52,10 +61,67 @@ namespace LootNearbyItem
             // 检测空格键按下
             if (Input.GetKeyDown(KeyCode.H))
             {
+                // 防抖检查 - 防止连续触发
+                if (Time.time - lastHKeyPressTime < KEY_DEBOUNCE_TIME)
+                {
+                    Debug.Log("H键触发过于频繁，已忽略");
+                    return;
+                }
+                 // 更新最后按键时间
+                lastHKeyPressTime = Time.time;
                 Debug.Log("H key pressed!");
+                // 检查是否已有战利品界面打开
+                if (null != DynamicLootBoxManager.Instance && DynamicLootBoxManager.Instance.IsLootViewOpen())
+                {
+                    Debug.Log("战利品界面已打开，忽略新请求");
+                    return;
+                }
+
                 // 在这里执行你的逻辑
                 LogPickUps();
+                List<InteractablePickup> pickups = SearchPickUpAround();
+
+                // 添加初始物品
+                if (pickups.Count > 0 )
+                {
+                    GenerateAndOpenRandomLoot(pickups.Select(p => p.ItemAgent.Item).ToList());
+                }
             }
+        }
+
+        private async void GenerateAndOpenRandomLoot(List<Item> randomItems)
+        {
+            if (null == DynamicLootBoxManager.Instance)
+            {
+                Debug.Log("创建DynamicLootBoxManager!");
+                LevelManager.Instance.transform.AddComponent<DynamicLootBoxManager>();
+            }
+            if (null == DynamicLootBoxManager.Instance)
+            {
+                Debug.Log("创建DynamicLootBoxManager失败!");
+                return;
+            }
+            Debug.Log("创建新箱子!");
+            // 创建新箱子
+            DynamicLootBoxManager.Instance.CreateNewHiddenLootBox();
+
+            // 添加物品
+            Debug.Log("添加物品!");
+            await DynamicLootBoxManager.Instance.AddItemsToBox(randomItems);
+
+            // 打开箱子
+            Debug.Log("打开箱子!");
+            DynamicLootBoxManager.Instance.OpenLootBox();
+
+            // 注册关闭事件
+            Debug.Log("注册关闭事件!");
+            DynamicLootBoxManager.Instance.OnBoxClosed += HandleBoxClosed;
+        }
+
+        private void HandleBoxClosed()
+        {
+            Debug.Log($"箱子已经关闭，剩余物品已经丢出，箱子即将销毁");
+            DynamicLootBoxManager.Instance.OnBoxClosed -= HandleBoxClosed;
         }
 
         void LogPickUps()
@@ -88,21 +154,8 @@ namespace LootNearbyItem
                     Item item = pickup.ItemAgent.Item;
                     Debug.Log("find other item " + item.name + " " + pickup.isActiveAndEnabled + " at pos " + pickup.ItemAgent.transform.position + " distance: " + Vector3.Distance(main.transform.position, item.transform.position));
                 }
-
+                Debug.Log($"find {otherGroup.Count} item on the ground");
             }
-
-            //太慢了，而且会卡
-            // InteractablePickup[] pickups = UnityEngine.Object.FindObjectsOfType<InteractablePickup>();
-            // foreach (InteractablePickup pickup in pickups)
-            // {
-            //     if (pickup != null)
-            //     {
-            //         Item item = pickup.ItemAgent.Item;
-            //         Debug.Log("find item" + item.name + " " + pickup.isActiveAndEnabled);
-            //         Debug.Log(pickup.ItemAgent);
-            //         CharacterMainControl main = CharacterMainControl.Main;
-            //     }
-            // }
         }
 
 
@@ -137,7 +190,7 @@ namespace LootNearbyItem
             return uniqueItems.ToList();
         }
 
-        
+
 
     }
 }
