@@ -1,13 +1,5 @@
-﻿using System;
-using Duckov.UI;
-using Duckov.Utilities;
-using ItemStatsSystem;
-using TMPro;
+﻿using ItemStatsSystem;
 using UnityEngine;
-using UnityEngine.UI;
-using HarmonyLib;
-using System.Reflection;
-using Duckov.MasterKeys.UI;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
@@ -22,11 +14,9 @@ namespace LootNearbyItem
         private float lastHKeyPressTime = 0f;
         private const float KEY_DEBOUNCE_TIME = 0.5f; // 防抖时间500毫秒
 
-        private const string HarmonyId = "duckovMods.TagInventoryWeight";
-
         void OnEnable()
         {
-   
+
         }
 
 
@@ -46,7 +36,7 @@ namespace LootNearbyItem
                     Debug.Log("H键触发过于频繁，已忽略");
                     return;
                 }
-                 // 更新最后按键时间
+                // 更新最后按键时间
                 lastHKeyPressTime = Time.time;
                 Debug.Log("H key pressed!");
                 // 检查是否已有战利品界面打开
@@ -57,13 +47,15 @@ namespace LootNearbyItem
                 }
 
                 // 在这里执行你的逻辑
-                LogPickUps();
                 List<InteractablePickup> pickups = SearchPickUpAround();
-
                 // 添加初始物品
-                if (pickups.Count > 0 )
+                if (pickups.Count > 0)
                 {
                     GenerateAndOpenRandomLoot(pickups.Select(p => p.ItemAgent.Item).ToList());
+                }
+                else
+                {
+                    // TODO: 人物吐气泡说：不要找啦，周围没有散落物！
                 }
             }
         }
@@ -103,41 +95,6 @@ namespace LootNearbyItem
             DynamicLootBoxManager.Instance.OnBoxClosed -= HandleBoxClosed;
         }
 
-        void LogPickUps()
-        {
-            CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
-            if (main != null)
-            {
-                Debug.Log($"main pos at {main.transform.position}");
-            }
-            else
-            {
-                Debug.Log("Test no main");
-                return;
-            }
-
-            InteractableBase? around = main.interactAction.MasterInteractableAround;
-            if (null != around)
-            {
-                foreach (InteractableBase pickupBase in around.GetInteractableList())
-                {
-                    if (pickupBase is InteractablePickup pickup)
-                    {
-                        Item item = pickup.ItemAgent.Item;
-                        Debug.Log("find Interactable item " + item.name + " " + pickup.isActiveAndEnabled + " at pos " + pickup.ItemAgent.transform.position);
-                    }
-                }
-                var otherGroup = SearchPickUpAround();
-                foreach (InteractablePickup pickup in otherGroup)
-                {
-                    Item item = pickup.ItemAgent.Item;
-                    Debug.Log("find other item " + item.name + " " + pickup.isActiveAndEnabled + " at pos " + pickup.ItemAgent.transform.position + " distance: " + Vector3.Distance(main.transform.position, item.transform.position));
-                }
-                Debug.Log($"find {otherGroup.Count} item on the ground");
-            }
-        }
-
-
         public static List<InteractablePickup> SearchPickUpAround()
         {
             Collider[] colliders = new Collider[100];
@@ -168,8 +125,6 @@ namespace LootNearbyItem
             }
             return uniqueItems.ToList();
         }
-
-
 
     }
 }

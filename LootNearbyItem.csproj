@@ -23,7 +23,7 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
+  <!-- <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.1" />
-  </ItemGroup>
+  </ItemGroup> -->
 </Project>

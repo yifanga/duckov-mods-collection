@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using ItemStatsSystem;
-using ItemStatsSystem.Items;
-using Duckov.Utilities;
 using Duckov.UI;
 using System.Reflection;
 
@@ -19,7 +17,6 @@ namespace LootNearbyItem
 
         // 当前隐藏箱子
         private InteractableLootbox currentHiddenLootBox;
-        private LootBoxLoader loader;
 
         // 箱子状态
         public bool IsBoxOpen { get; private set; }
@@ -61,36 +58,14 @@ namespace LootNearbyItem
 
             // 添加必要组件
             currentHiddenLootBox = lootBoxObject.AddComponent<InteractableLootbox>();
-            loader = lootBoxObject.AddComponent<LootBoxLoader>();
 
             //设置名称
             SetPrivateField(currentHiddenLootBox, "displayNameKey", "地上散落物");
 
-            // 配置加载器
-            ConfigureLoader();
         }
 
         // 配置箱子加载器
-        private void ConfigureLoader()
-        {
-            if (loader == null) return;
-
-            // 禁用随机生成
-            SetPrivateField(loader, "randomCount", Vector2Int.zero);
-            loader.randomFromPool = false;
-            SetPrivateField(loader, "activeChance", 1f);
-            loader.autoSetup = true;
-            loader.dropOnSpawnItem = false;
-            loader.ignoreLevelConfig = true;
-            SetPrivateField(loader, "inventorySize", 35); // 初始容量
-
-            // 清空固定物品列表
-            // 清空固定物品列表
-            var fixedItems = GetPrivateField<List<int>>(loader, "fixedItems");
-            fixedItems?.Clear();
-
-            SetPrivateField(loader, "fixedItemSpawnChance", 1f);
-        }
+        
 
         // 添加以下两个辅助方法到类中
         private void SetPrivateField<T>(object target, string fieldName, T value)
@@ -278,23 +253,6 @@ namespace LootNearbyItem
             }
             ClearLootBox();
             DestroyCurrentLootBox();
-        }
-
-        // 获取箱子中剩余物品
-        public List<Item> GetRemainingItems()
-        {
-            if (currentHiddenLootBox == null || currentHiddenLootBox.Inventory == null)
-                return new List<Item>();
-
-            List<Item> items = new List<Item>();
-            foreach (var item in currentHiddenLootBox.Inventory)
-            {
-                if (item != null)
-                {
-                    items.Add(item);
-                }
-            }
-            return items;
         }
 
         // 清空箱子
