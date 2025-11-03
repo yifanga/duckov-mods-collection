@@ -1,20 +1,31 @@
-## 更详细的重量状态
-实时显示背包重量与超重，负重和轻盈关键阈值的精确差值:
+[h1]一键搜索散落物 [/h1]
 
-➤ 超重：当前重量超过最大限额时，显示超出值
-➤ 距超重：重量＞90%最大容量时，提示剩余安全空间
-➤ 负重：超过标准负重阈值时，显示额外负担重量
-➤ 距负重：介于标准与负重之间时，提示达到负重的差值
-➤ 距轻盈：超过轻盈基准但未达标准时，显示超出轻盈的量
-➤ 轻盈：低于轻盈基准时，显示富余空间值
+[h2]理包时地面物品找不到怎么办？[/h2]
+不要急！订阅本MOD后，按下 [b]H键[/b] 即可像搜索箱子一样搜索地面物品，快速定位目标物品！
 
-背包整理强迫症和资源管理者的必备工具！
+➤ [b]已进行多次测试与性能优化[/b]
+➤ 遇到问题请及时在评论区反馈
+➤ 如果您喜欢这个MOD，麻烦[b]点赞或留言[/b]支持下，感谢！
 
-[状态阈值说明]
-• 超重阈值：无法承受的重量上限
-• 负重阈值：大幅降低移动速度的临界点
-• 轻盈阈值：加速移动的舒适负重区
+[h3]更新计划：[/h3]
+[list]
+[*] 按键支持自定义配置
+[*] 多语言支持
+[*] 不存在附近物品时，人物气泡提示
+[/list]
 
-注意本mod依赖HarmonyLib，需要同时订阅HarmonyLib，并且需要将【HarmonyLib】移动至最上方优先启用
+[hr]
+[h1]One-Click Search Scattered Items [/h1]
 
-如果你是后订阅的本mod，订阅后第一次启动游戏需要将HarmonyLib移动至最上方，然后直接重启游戏，在重启后就能正常勾选了（之前的mod勾选消失也会恢复，这是官方mod加载逻辑的问题，需要等待兼容优化）
+[h2]Can't find items on the ground while organizing?[/h2]
+Don't worry! Subscribe to this MOD and press [b]H Key[/b] to search ground items just like searching a chest, quickly locate your target items!
+
+➤ [b]Rigorously tested and performance optimized[/b]
+➤ Encounter any issues? Please leave feedback in the comments
+➤ If you enjoy this MOD, please [b]thumbs up or comment[/b] to show your support!
+
+[h3]Planned Updates:[/h3]
+[list]
+[*] Customizable key binding
+[*] Multi-language support
+[/list]
