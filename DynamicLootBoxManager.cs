@@ -139,13 +139,17 @@ namespace LootNearbyItem
             {
                 await UniTask.WaitUntil(() => currentHiddenLootBox.Inventory != null);
             }
-            if(currentHiddenLootBox == null || currentHiddenLootBox.Inventory == null)
+            if (currentHiddenLootBox == null || currentHiddenLootBox.Inventory == null)
             {
                 Debug.LogError("Create HiddenLootBox Failed!");
                 return;
             }
+            
+            // 调整容量
+            int n = items.Count;
+            currentHiddenLootBox.Inventory.SetCapacity(Math.Max(35, n % 35 == 0 ? n : n + 35 - n % 35));
 
-            // 添加新物品
+            // 再添加新物品
             foreach (var item in items)
             {
                 if (item == null) continue;
@@ -163,9 +167,7 @@ namespace LootNearbyItem
                     }
                 }
             }
-            // 调整容量
-            int n = items.Count;
-            currentHiddenLootBox.Inventory.SetCapacity(Math.Max(35, n % 35 == 0 ? n : n + 35 - n % 35));
+            
         }
         
         // 打开箱子（显示战利品界面）

@@ -26,33 +26,12 @@ namespace LootNearbyItem
 
         void OnEnable()
         {
-            // InteractHUD h;
-            // InteractSelectionHUD a;
-            // InteractablePickup p;
-            // Debug.Log("TagInventoryWeight Loaded!!!");
-            // // 创建Harmony实例
-            // harmony = new Harmony(HarmonyId);
-            // // 直接应用补丁
-            // harmony.PatchAll(Assembly.GetExecutingAssembly());
-            // LootBoxLoader pppp;
-            // LootBoxLoader ccc;
-            LootView ll;
-            // InteractableLootbox bb;
-            // UniTask ttt;
-
-
+   
         }
 
 
         void OnDisable()
         {
-            // if (harmony != null)
-            // {
-            //     // 更精确的卸载方式 - 只移除本mod的补丁
-            //     harmony.UnpatchAll(HarmonyId);
-            //     harmony = null;
-            //     Debug.Log("Harmony patches removed");
-            // }
 
         }
 
