@@ -128,9 +128,10 @@ namespace LootNearbyItem
             foreach (var item in items)
             {
                 if (item == null) continue;
-                //TODO:物品移动逻辑优化
+                // 物品移动到箱子
                 item.AgentUtilities.ReleaseActiveAgent();
                 item.Detach();
+                item.Inspected = true;
 
                 // 添加到库存
                 if (!currentHiddenLootBox.Inventory.AddAndMerge(item))
