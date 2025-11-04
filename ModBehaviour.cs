@@ -71,7 +71,16 @@ namespace LootNearbyItem
                         }
                         // 更新最后气泡时间
                         lastBubbleTime = Time.time;
-                        DialogueBubblesManager.Show(LocalizationUtil.NoScatteredObjectsText, mainTrans, speed: 100f, duration: 1.2f);
+
+                        // 扩大检索范围3倍，确认下附近有没有可拾取的物品
+                        if (SearchPickUpNotAway().Count > 0)
+                        {
+                            DialogueBubblesManager.Show(LocalizationUtil.ItemOutOfRangeText, mainTrans, speed: 100f, duration: 1.2f);
+                        }
+                        else
+                        {
+                            DialogueBubblesManager.Show(LocalizationUtil.NoScatteredObjectsText, mainTrans, speed: 100f, duration: 1.2f);
+                        }
                     }
                 }
             }
@@ -110,6 +119,36 @@ namespace LootNearbyItem
         {
             Debug.Log($"箱子已经关闭，剩余物品已经丢出，箱子即将销毁");
             DynamicLootBoxManager.Instance.OnBoxClosed -= HandleBoxClosed;
+        }
+
+        public static List<InteractablePickup> SearchPickUpNotAway()
+        {
+            Collider[] colliders = new Collider[100];
+            LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
+            CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
+
+            if (null == main || !main.IsMainCharacter)
+            {
+                return new List<InteractablePickup>();
+            }
+
+            int num = Physics.OverlapSphereNonAlloc(main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f, 0.9f, colliders, interactLayers);
+            if (num <= 0)
+            {
+                return new List<InteractablePickup>();
+            }
+
+            HashSet<InteractablePickup> uniqueItems = new HashSet<InteractablePickup>();
+            for (int i = 0; i < num; i++)
+            {
+                Collider collider = colliders[i];
+                InteractablePickup tmp = collider.GetComponent<InteractablePickup>();
+                if (null != tmp)
+                {
+                    uniqueItems.Add(tmp);
+                }
+            }
+            return uniqueItems.ToList();
         }
 
         public static List<InteractablePickup> SearchPickUpAround()

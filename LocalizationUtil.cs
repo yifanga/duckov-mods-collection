@@ -45,6 +45,22 @@ namespace LootNearbyItem
             }
         );
 
+        public static string ItemOutOfRangeText => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "距离可拾取物品有点远，请再靠近些吧~",
+                ChineseTraditional = "距離可拾取物品有點遠，請再靠近些吧~",
+                Japanese = "拾えるアイテムが少し遠いです、もう少し近づいてください~",
+                English = "A bit far from the item - move a little closer, please~",
+                Korean = "아이템이 조금 멀리 있어요, 가까이 다가가 주세요~",
+                French = "Un peu loin de l'objet - approchez-vous, s'il vous plaît~",
+                German = "Etwas zu weit vom Gegenstand - kommen Sie bitte etwas näher~",
+                Russian = "Немного далековато от предмета - подойдите ближе, пожалуйста~",
+                Spanish = "Un poco lejos del objeto - acércate un poco más, por favor~"
+            }
+        );
+
         // 翻译数据集结构
         private struct TranslationSet
         {
