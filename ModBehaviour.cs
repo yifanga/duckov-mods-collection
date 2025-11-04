@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using Unity.VisualScripting;
+using Duckov.UI.DialogueBubbles;
 
 namespace LootNearbyItem
 {
@@ -13,6 +14,10 @@ namespace LootNearbyItem
 
         private float lastHKeyPressTime = 0f;
         private const float KEY_DEBOUNCE_TIME = 0.5f; // 防抖时间500毫秒
+
+        private const float BUBBLES_TIME = 1.5f; // 气泡防抖时间500毫秒
+
+        private float lastBubbleTime = 0f;
 
         void OnEnable()
         {
@@ -55,7 +60,19 @@ namespace LootNearbyItem
                 }
                 else
                 {
-                    // TODO: 人物吐气泡说：不要找啦，周围没有散落物！
+                    //人物吐气泡说：不要找啦，周围没有散落物！
+                    Transform? mainTrans = DynamicLootBoxManager.GetMainTransform();
+                    if (null != mainTrans)
+                    {
+                        if (Time.time - lastBubbleTime < BUBBLES_TIME)
+                        {
+                            Debug.Log("气泡触发过于频繁，已忽略");
+                            return;
+                        }
+                        // 更新最后气泡时间
+                        lastBubbleTime = Time.time;
+                        DialogueBubblesManager.Show(LocalizationUtil.NoScatteredObjectsText, mainTrans, speed: 100f, duration: 1.2f);
+                    }
                 }
             }
         }

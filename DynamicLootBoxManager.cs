@@ -60,7 +60,7 @@ namespace LootNearbyItem
             currentHiddenLootBox = lootBoxObject.AddComponent<InteractableLootbox>();
 
             //设置名称
-            SetPrivateField(currentHiddenLootBox, "displayNameKey", "地上散落物");
+            SetPrivateField(currentHiddenLootBox, "displayNameKey", LocalizationUtil.ScatteredObjectsText);
 
         }
 
@@ -295,7 +295,7 @@ namespace LootNearbyItem
             return false;
         }
 
-        private Transform? GetMainTransform()
+        public static Transform? GetMainTransform()
         {
             CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
             if (main == null)
