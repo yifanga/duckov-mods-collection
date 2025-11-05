@@ -67,8 +67,8 @@ namespace TagInventoryWeight
         private static string getWeightTextByLang(float weight, float maxWeight)
         {
             var currentLanguage = LocalizationManager.CurrentLanguage;
-            if (UnityEngine.SystemLanguage.ChineseSimplified.Equals(currentLanguage)
-            || UnityEngine.SystemLanguage.ChineseTraditional.Equals(currentLanguage))
+            if (SystemLanguage.ChineseSimplified.Equals(currentLanguage)
+            || SystemLanguage.ChineseTraditional.Equals(currentLanguage))
             {
                 return calculateTextByWeight(weight, maxWeight);
             }
