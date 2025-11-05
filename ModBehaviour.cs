@@ -5,6 +5,7 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using Unity.VisualScripting;
 using Duckov.UI.DialogueBubbles;
+using Duckov.Modding;
 
 namespace LootNearbyItem
 {
@@ -21,7 +22,8 @@ namespace LootNearbyItem
 
         void OnEnable()
         {
-
+            // 初始化配置
+            ModConfig.Init(ModManager.DefaultModFolderPath);
         }
 
 
@@ -32,18 +34,19 @@ namespace LootNearbyItem
 
         void Update()
         {
-            // 检测空格键按下
-            if (Input.GetKeyDown(KeyCode.H))
+            // 检测按键按下
+            KeyCode hotKey = ModConfig.GetSearchKeyCode();
+            if (Input.GetKeyDown(hotKey))
             {
                 // 防抖检查 - 防止连续触发
                 if (Time.time - lastHKeyPressTime < KEY_DEBOUNCE_TIME)
                 {
-                    Debug.Log("H键触发过于频繁，已忽略");
+                    Debug.Log("按键触发过于频繁，已忽略");
                     return;
                 }
                 // 更新最后按键时间
                 lastHKeyPressTime = Time.time;
-                Debug.Log("H key pressed!");
+                Debug.Log($"{hotKey} key pressed!");
                 // 检查是否已有战利品界面打开
                 if (null != DynamicLootBoxManager.Instance && DynamicLootBoxManager.Instance.IsLootViewOpen())
                 {
