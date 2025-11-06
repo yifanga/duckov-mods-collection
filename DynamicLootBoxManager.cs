@@ -15,6 +15,12 @@ namespace LootNearbyItem
         // 单例模式
         public static DynamicLootBoxManager Instance { get; private set; }
 
+        public static FieldInfo LootboxDisplayNameKeyField = typeof(InteractableLootbox).GetField("displayNameKey",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+        public static FieldInfo LootboxShowSortButtonField = typeof(InteractableLootbox).GetField("showSortButton",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
         // 当前隐藏箱子
         private InteractableLootbox currentHiddenLootBox;
 
@@ -60,15 +66,17 @@ namespace LootNearbyItem
             currentHiddenLootBox = lootBoxObject.AddComponent<InteractableLootbox>();
 
             //设置名称
-            SetPrivateField(currentHiddenLootBox, "displayNameKey", LocalizationUtil.ScatteredObjectsText);
-
+            // SetPrivateField(currentHiddenLootBox, "displayNameKey", LocalizationUtil.ScatteredObjectsText);
+            LootboxDisplayNameKeyField?.SetValue(currentHiddenLootBox, LocalizationUtil.ScatteredObjectsText);
+            // SetPrivateField(currentHiddenLootBox, "showSortButton", true);
+            LootboxShowSortButtonField?.SetValue(currentHiddenLootBox, true);
         }
 
         // 配置箱子加载器
         
 
         // 添加以下两个辅助方法到类中
-        private void SetPrivateField<T>(object target, string fieldName, T value)
+        public static void SetPrivateField<T>(object target, string fieldName, T value)
         {
             var field = target.GetType().GetField(fieldName,
                 BindingFlags.NonPublic |
@@ -80,7 +88,7 @@ namespace LootNearbyItem
             }
         }
 
-        private T GetPrivateField<T>(object target, string fieldName)
+        public static T GetPrivateField<T>(object target, string fieldName)
         {
             var field = target.GetType().GetField(fieldName,
                 BindingFlags.NonPublic |

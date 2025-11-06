@@ -6,18 +6,18 @@ using Cysharp.Threading.Tasks;
 using Unity.VisualScripting;
 using Duckov.UI.DialogueBubbles;
 using Duckov.Modding;
+using System;
 
 namespace LootNearbyItem
 {
 
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
+        private static readonly float KEY_DEBOUNCE_TIME = 0.5f; // 防抖时间500毫秒
+        private static readonly float BUBBLES_TIME = 1.5f; // 气泡防抖时间500毫秒
+        private static readonly float DEFAULT_SEARCH_RADIUS = 0.3f; // 默认搜索半径0.3m
 
         private float lastHKeyPressTime = 0f;
-        private const float KEY_DEBOUNCE_TIME = 0.5f; // 防抖时间500毫秒
-
-        private const float BUBBLES_TIME = 1.5f; // 气泡防抖时间500毫秒
-
         private float lastBubbleTime = 0f;
 
         void OnEnable()
@@ -54,12 +54,12 @@ namespace LootNearbyItem
                     return;
                 }
 
-                // 在这里执行你的逻辑
-                List<InteractablePickup> pickups = SearchPickUpAround();
+                // 执行战利品或掉落物搜索逻辑
+                List<Item> targetItems = SearchItemAround(DEFAULT_SEARCH_RADIUS, true);
                 // 添加初始物品
-                if (pickups.Count > 0)
+                if (targetItems.Count > 0)
                 {
-                    GenerateAndOpenRandomLoot(pickups.Select(p => p.ItemAgent.Item).ToList());
+                    GenerateAndOpenRandomLoot(targetItems);
                 }
                 else
                 {
@@ -76,7 +76,7 @@ namespace LootNearbyItem
                         lastBubbleTime = Time.time;
 
                         // 扩大检索范围3倍，确认下附近有没有可拾取的物品
-                        if (SearchPickUpNotAway().Count > 0)
+                        if (SearchItemAround(DEFAULT_SEARCH_RADIUS * 3f, false).Count > 0)
                         {
                             DialogueBubblesManager.Show(LocalizationUtil.ItemOutOfRangeText, mainTrans, speed: 100f, duration: 1.2f);
                         }
@@ -124,7 +124,7 @@ namespace LootNearbyItem
             DynamicLootBoxManager.Instance.OnBoxClosed -= HandleBoxClosed;
         }
 
-        public static List<InteractablePickup> SearchPickUpNotAway()
+        public static List<Item> SearchItemAround(float radius, bool forLoot)
         {
             Collider[] colliders = new Collider[100];
             LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
@@ -132,55 +132,51 @@ namespace LootNearbyItem
 
             if (null == main || !main.IsMainCharacter)
             {
-                return new List<InteractablePickup>();
+                return new List<Item>();
             }
 
-            int num = Physics.OverlapSphereNonAlloc(main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f, 0.9f, colliders, interactLayers);
+            int num = Physics.OverlapSphereNonAlloc(main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f, radius, colliders, interactLayers);
             if (num <= 0)
             {
-                return new List<InteractablePickup>();
+                return new List<Item>();
             }
 
-            HashSet<InteractablePickup> uniqueItems = new HashSet<InteractablePickup>();
+            HashSet<Item> uniqueItems = new HashSet<Item>();
             for (int i = 0; i < num; i++)
             {
                 Collider collider = colliders[i];
-                InteractablePickup tmp = collider.GetComponent<InteractablePickup>();
-                if (null != tmp)
+                if (ModConfig.GetSearchContainers())
                 {
-                    uniqueItems.Add(tmp);
+                    InteractableLootbox tmpBox = collider.GetComponent<InteractableLootbox>();
+                    if (null != tmpBox)
+                    {
+                        string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
+                        Debug.Log($"find loot box name key {nameKey}");
+                        // 只处理击杀掉落的战利品
+                        if ("UI_LootBox_Loot".Equals(nameKey))
+                        {
+                            foreach (var item in tmpBox.Inventory)
+                            {
+                                if (null != item)
+                                {
+                                    uniqueItems.Add(item);
+                                }
+                            }
+                            // 如果后续是为了拾取，则提前标记好箱子状态为已搜索
+                            if (forLoot)
+                            {
+                                tmpBox.SetMarkerUsed();
+                                tmpBox.needInspect = false;
+                            }
+                        }
+                    }
+
                 }
-            }
-            return uniqueItems.ToList();
-        }
-
-        public static List<InteractablePickup> SearchPickUpAround()
-        {
-            Collider[] colliders = new Collider[100];
-            LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
-            CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
-
-            if (null == main || !main.IsMainCharacter)
-            {
-                return new List<InteractablePickup>();
-            }
-
-            int num = Physics.OverlapSphereNonAlloc(main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f, 0.3f, colliders, interactLayers);
-            if (num <= 0)
-            {
-                return new List<InteractablePickup>();
-            }
-
-            HashSet<InteractablePickup> uniqueItems = new HashSet<InteractablePickup>();
-            for (int i = 0; i < num; i++)
-            {
-                Collider collider = colliders[i];
-                InteractablePickup tmp = collider.GetComponent<InteractablePickup>();
-                if (null != tmp)
+                InteractablePickup tmpPickup = collider.GetComponent<InteractablePickup>();
+                if (null != tmpPickup)
                 {
-                    uniqueItems.Add(tmp);
+                    uniqueItems.Add(tmpPickup.ItemAgent.Item);
                 }
-
             }
             return uniqueItems.ToList();
         }
