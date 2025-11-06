@@ -5,7 +5,9 @@
 不要急！订阅本MOD后，按下 [b]H键[/b] 即可像搜索箱子一样搜索地面物品，快速定位目标物品！
 (注意，本mod纯粹为辅助mod，不是全图搜索，物品的一键拾取范围和人物默认拾取范围一致)
 
-本mod建议搭配 mod [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3597089297]更详细的重量状态[/url][/b] 使用，帮你成为理包高手:steamhappy:
+除了一键搜索附近地面散落的物品外，目前还支持搜索附近的战利品箱子（只搜索敌人死亡后生成的箱子，并且会跳过搜索过程），本功能需要参考更新说明从配置中开启，默认是关闭的
+
+本mod建议搭配 mod [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3597089297]更详细的重量状态[/url] 使用，帮你成为理包高手:steamhappy:
 
 ➤ [b]已进行性能优化和多次测试[/b]
 ➤ 遇到问题请及时在评论区反馈
@@ -20,26 +22,26 @@
 
 [h3]更新计划[/h3]
 [list]
-
 [*] 优化配置页面，集成到游戏设置中
 [/list]
 
 [hr]
-[h1]One-Click Search for Scattered Items [/h1]
-[h2]Struggling to find ground items while organizing your inventory?[/h2]
-No worries! After subscribing to this MOD, simply press the [b]H key[/b] to search for ground items just like containers, allowing you to quickly locate target items!
-(Note: This MOD is purely an assistant tool - not a full-map search. The one-click pickup range matches your character's default pickup radius)
-We recommend pairing this MOD with [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3597089297]Detailed Weight Status[/url][/b] to become a true inventory management expert :steamhappy:
-➤ [b]Thoroughly optimized and tested[/b]
-➤ Please report any issues in the comments section
-➤ If you enjoy this MOD, please support us with a [b]thumbs-up or comment[/b] - we appreciate it!
+[h1]One-Key Search for Ground Items [/h1]
+[h2]Can't find items on the ground while organizing your inventory?[/h2]
+Don't worry! After subscribing to this MOD, press the [b]H key[/b] to search ground items like containers, quickly locating target items!
+(Note: This mod is purely an auxiliary tool, not a full-map search. The one-key pickup range matches the character's default pickup range)
+In addition to one-key search for nearby ground items, it now supports searching nearby loot crates (only searches crates generated after enemy deaths and skips the search process). This feature requires enabling in the configuration according to the update notes and is disabled by default.
+This mod is recommended to be used with the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3597089297]More Detailed Weight Status[/url] mod to help you become an expert organizer :steamhappy:
+➤ [b]Performance optimized and extensively tested[/b]
+➤ Please report any issues promptly in the comments section
+➤ If you enjoy this MOD, please support it by [b]liking or leaving a comment[/b]. Thank you!
 [h3]Recent Updates[/h3]
 [list]
-[*] 2025-11-04 Added multi-language support and character bubble notifications: pressing H will now prompt "Move closer" when items are nearby but out of reach, and "No items found" when nothing is nearby
-[*] 2025-11-05 Added key binding customization: First enable the mod in-game through the mod manager, then copy the mod directory path from the top of the page. After exiting the game, navigate to the LootNearbyItem folder in your mod directory. Edit and save the config.txt file following the included instructions to change your hotkey
+[*] 2025-11-04 Added multilingual support. New character speech bubble prompts: Pressing H when items are nearby but not close enough prompts "Need to get closer"; no items nearby prompts "No items found."
+[*] 2025-11-05 Added key rebinding support: First enable the mod in-game via the mod management page, then copy the top mod directory path and exit the game. Open the LootNearbyItem folder in the mod directory, where config.txt is the configuration file. Follow the instructions to modify settings and save to change the hotkey.
+[*] 2025-11-06 Added an organize button for ground items on the right side to keep items organized! Supports searching nearby loot crates (only enemy-generated crates). Note: Skips the search process. Enable in configuration, disabled by default.
 [/list]
-[h3]Upcoming Features[/h3]
+[h3]Planned Updates[/h3]
 [list]
-[*] Support for searching nearby containers (configurable option, disabled by default)
-[*] Integrated configuration menu within the game's settings
+[*] Optimize configuration interface and integrate it into game settings.
 [/list]
