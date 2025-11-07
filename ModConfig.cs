@@ -34,6 +34,8 @@ namespace LootNearbyItem
             public string searchKey = "H";
             public bool searchContainers = false;
 
+            public float searchContainersRadius = 10f;
+
             [NonSerialized]
             public KeyCode searchKeyCode = KeyCode.H;
         }
@@ -44,7 +46,8 @@ namespace LootNearbyItem
             {
                 searchKey = "H",
                 searchContainers = false,
-                searchKeyCode = KeyCode.H
+                searchKeyCode = KeyCode.H,
+                searchContainersRadius = 10f
             };
         }
 
@@ -103,6 +106,30 @@ namespace LootNearbyItem
             SaveFile(configFilePath, _current);
         }
 
+        public static void SaveConfig(string modRootFolder)
+        {
+            if (null == _current)
+            {
+                return;
+            }
+            // 设置配置文件夹路径
+            var modFolderPath = Path.Combine(modRootFolder, "LootNearbyItem");
+            var configFilePath = Path.Combine(modFolderPath, "config.txt");
+
+            try
+            {
+                // 确保目录存在
+                if (!Directory.Exists(modFolderPath))
+                    Directory.CreateDirectory(modFolderPath);
+
+                SaveFile(configFilePath, _current);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"ModConfig save config failed: {ex.Message}");
+            }
+        }
+
 
         private static bool ValidateConfig(ConfigData tmpConfig)
         {
@@ -136,7 +163,7 @@ namespace LootNearbyItem
             return Array.Exists(ValidKeys, k => k.Equals(key, StringComparison.OrdinalIgnoreCase));
         }
 
-        public static void SaveFile(string configFilePath, ConfigData configData)
+        private static void SaveFile(string configFilePath, ConfigData configData)
         {
             if (configData == null) return;
             try
@@ -151,6 +178,7 @@ namespace LootNearbyItem
                               "//  特殊键: \"Space\", \"Tab\", \"Return\", \"Escape\"\n" +
                               "//  方向键: \"UpArrow\", \"DownArrow\", \"LeftArrow\", \"RightArrow\"\n" +
                               "// searchContainers: true/false - 是否搜索附近容器\n\n" +
+                              "// searchContainersRadius: 10.0 - 搜索附近容器的距离半径(0.3m-20m)\n\n" +
                               JsonUtility.ToJson(configData, true); // 使用美化格式
 
                 File.WriteAllText(configFilePath, json);
@@ -183,12 +211,62 @@ namespace LootNearbyItem
             return _current.searchKeyCode; // 直接返回缓存值
         }
 
+        public static void SetSearchKeyCode(KeyCode keyCode)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            _current.searchKeyCode = keyCode;
+        }
+
+        public static float GetSearchRadius()
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+            if (_current.searchContainersRadius <= 0.3f)
+            {
+                _current.searchContainersRadius = 0.3f;
+                return 0.3f;
+            }
+            if (_current.searchContainersRadius >= 20f)
+            {
+                _current.searchContainersRadius = 20f;
+                return 20f;
+            }
+            return _current.searchContainersRadius; // 直接返回缓存值
+        }
+
+        public static void SetSearchRadius(float radius)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            if (radius <= 0.3f)
+            {
+                radius = 0.3f;
+
+            }
+            if (radius >= 20f)
+            {
+                radius = 20f;
+            }
+            _current.searchContainersRadius = radius; // 直接返回缓存值
+        }
+
         public static bool GetSearchContainers()
         {
             if (_current == null)
                 throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
 
             return _current.searchContainers; // 直接返回缓存值
+        }
+
+        public static void SetSearchContainers(bool enableSearch)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            _current.searchContainers = enableSearch; // 直接返回缓存值
         }
 
     }
