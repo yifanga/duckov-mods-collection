@@ -68,7 +68,7 @@ namespace LootNearbyItem
                 }
 
                 // 执行战利品或掉落物搜索逻辑
-                List<Item> targetItems = SearchItemAroundForLoot(DEFAULT_SEARCH_RADIUS, ModConfigManager.GetSearchContainers(), ModConfigManager.GetSearchContainersRadius());
+                List<Item> targetItems = SearchItemAroundForLoot(ModConfigManager.GetSearchPickupRadius(), ModConfigManager.GetSearchContainers(), ModConfigManager.GetSearchContainersRadius());
                 // 添加初始物品
                 if (targetItems.Count > 0)
                 {
@@ -89,7 +89,8 @@ namespace LootNearbyItem
                         lastBubbleTime = Time.time;
 
                         // 扩大检索范围5倍，确认下附近有没有可拾取的物品
-                        if (SearchItemAroundForNotify(DEFAULT_SEARCH_RADIUS * 5f, ModConfigManager.GetSearchContainers(),
+                        if (SearchItemAroundForNotify(ModConfigManager.GetSearchPickupRadius() + DEFAULT_SEARCH_RADIUS * 4f,
+                                ModConfigManager.GetSearchContainers(),
                                 ModConfigManager.GetSearchContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f))
                         {
                             DialogueBubblesManager.Show(LocalizationUtil.ItemOutOfRangeText, mainTrans, speed: 100f, duration: 1.2f);
@@ -218,7 +219,7 @@ namespace LootNearbyItem
             return uniqueItems.ToList();
         }
 
-        
+
 
         public static bool SearchItemAroundForNotify(float pickupRadius, bool enableLootbox, float lootboxRadius)
         {
