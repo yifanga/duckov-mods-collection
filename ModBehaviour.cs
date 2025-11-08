@@ -24,20 +24,31 @@ namespace LootNearbyItem
         void OnEnable()
         {
             // 初始化配置
-            ModConfig.Init(ModManager.DefaultModFolderPath);
+            ModConfigManager.Init(ModManager.DefaultModFolderPath);
+            // 监听配置，并随着配置更改随时保存
+            ModManager.OnModActivated += ModConfigManager.OnModConfigMenuActivated;
+
+            // 立即检查一次，防止 ModConfig 已经加载但事件错过了
+            if (ModConfigAPI.IsAvailable())
+            {
+                Debug.Log("LootNearbyItem: ModConfig already available!");
+                ModConfigManager.SetupModConfig();
+                ModConfigManager.LoadConfigFromModConfig();
+            }
         }
 
 
         void OnDisable()
         {
-            // 记录当前配置并保存
-            // ModConfig.SaveConfig(ModManager.DefaultModFolderPath);
+            // 清理监听配置
+            ModManager.OnModActivated += ModConfigManager.OnModConfigMenuActivated;
+            ModConfigAPI.SafeRemoveOnOptionsChangedDelegate(ModConfigManager.OnModConfigOptionsChanged);
         }
 
         void Update()
         {
             // 检测按键按下
-            KeyCode hotKey = ModConfig.GetSearchKeyCode();
+            KeyCode hotKey = ModConfigManager.GetSearchKeyCode();
             if (Input.GetKeyDown(hotKey))
             {
                 // 防抖检查 - 防止连续触发
@@ -57,7 +68,7 @@ namespace LootNearbyItem
                 }
 
                 // 执行战利品或掉落物搜索逻辑
-                List<Item> targetItems = SearchItemAroundForLoot(DEFAULT_SEARCH_RADIUS, ModConfig.GetSearchContainers(), ModConfig.GetSearchContainersRadius());
+                List<Item> targetItems = SearchItemAroundForLoot(DEFAULT_SEARCH_RADIUS, ModConfigManager.GetSearchContainers(), ModConfigManager.GetSearchContainersRadius());
                 // 添加初始物品
                 if (targetItems.Count > 0)
                 {
@@ -78,8 +89,8 @@ namespace LootNearbyItem
                         lastBubbleTime = Time.time;
 
                         // 扩大检索范围5倍，确认下附近有没有可拾取的物品
-                        if (SearchItemAroundForNotify(DEFAULT_SEARCH_RADIUS * 5f, ModConfig.GetSearchContainers(),
-                                ModConfig.GetSearchContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f))
+                        if (SearchItemAroundForNotify(DEFAULT_SEARCH_RADIUS * 5f, ModConfigManager.GetSearchContainers(),
+                                ModConfigManager.GetSearchContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f))
                         {
                             DialogueBubblesManager.Show(LocalizationUtil.ItemOutOfRangeText, mainTrans, speed: 100f, duration: 1.2f);
                         }

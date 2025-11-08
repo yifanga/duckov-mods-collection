@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using SodaCraft.Localizations;
 using UnityEngine;
 
@@ -58,6 +60,83 @@ namespace LootNearbyItem
                 German = "Etwas zu weit vom Gegenstand - kommen Sie bitte etwas näher~",
                 Russian = "Немного далековато от предмета - подойдите ближе, пожалуйста~",
                 Spanish = "Un poco lejos del objeto - acércate un poco más, por favor~"
+            }
+        );
+        public static string HotKeySetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "快捷键设置",
+                ChineseTraditional = "快捷鍵設置",
+                Japanese = "ホットキー設定",
+                English = "Hotkey Settings",
+                Korean = "단축키 설정",
+                French = "Paramètres de raccourci",
+                German = "Tastenkombinationseinstellungen",
+                Russian = "Настройки горячих клавиш",
+                Spanish = "Configuración de teclas rápidas"
+            }
+        );
+
+        public static string SearchHotKeySetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "一键搜索快捷键设置",
+                ChineseTraditional = "一鍵搜索快捷鍵設置",
+                Japanese = "ワンクリック検索ホットキー設定",
+                English = "One-click Search Hotkey Settings",
+                Korean = "원클릭 검색 단축키 설정",
+                French = "Paramètres de raccourci de recherche en un clic",
+                German = "Ein-Klick-Such-Hotkey-Einstellungen",
+                Russian = "Настройки горячих клавиш для поиска в один клик",
+                Spanish = "Configuración de tecla rápida de búsqueda con un clic"
+            }
+        );
+        public static string SearchContainersSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "是否启用搜索击杀掉落的战利品盒子",
+                ChineseTraditional = "是否啟用搜索擊殺掉落的戰利品盒子",
+                Japanese = "撃破でドロップした戦利品ボックスの検索を有効にするか",
+                English = "Enable search for loot boxes from kills",
+                Korean = "처치 시 드롭된 전리품 상자 검색 활성화 여부",
+                French = "Activer la recherche des coffres de butin des ennemis vaincus",
+                German = "Suche nach Beutekisten von besiegten Gegnern aktivieren",
+                Russian = "Включить поиск ящиков с лутом после убийств",
+                Spanish = "Habilitar búsqueda de contenedores de botín de enemigos eliminados"
+            }
+        );
+        public static string SearchContainersRadiusSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "搜索击杀掉落战利品盒子的半径（单位m）",
+                ChineseTraditional = "搜索擊殺掉落戰利品盒子的半徑（單位m）",
+                Japanese = "撃破でドロップした戦利品ボックスの検索半径（単位m）",
+                English = "Search radius for loot boxes from kills (in meters)",
+                Korean = "처치 시 드롭된 전리품 상자 검색 반경 (단위: m)",
+                French = "Rayon de recherche pour les coffres de butin (en mètres)",
+                German = "Suchradius für Beutekisten (in Metern)",
+                Russian = "Радиус поиска ящиков с лутом (в метрах)",
+                Spanish = "Radio de búsqueda para contenedores de botín (en metros)"
+            }
+        );
+                
+        public static string SearchPickupRadiusSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "搜索地上物品的半径（官方默认0.3m，不建议修改，影响平衡）",
+                ChineseTraditional = "搜索地上物品的半徑（官方預設0.3m，不建議修改，影響平衡）",
+                Japanese = "地面アイテムの検索半径（公式デフォルト0.3m、変更非推奨、バランスに影響）",
+                English = "Ground item search radius (default 0.3m, not recommended to change, affects balance)",
+                Korean = "지면 아이템 검색 반경 (기본값 0.3m, 변경 권장하지 않음, 밸런스 영향)",
+                French = "Rayon de recherche des objets au sol (0.3m par défaut, déconseillé de modifier, affecte l'équilibre)",
+                German = "Suchradius für Bodenobjekte (Standard 0.3m, Änderung nicht empfohlen, beeinflusst Balance)",
+                Russian = "Радиус поиска предметов на земле (по умолчанию 0.3м, изменение не рекомендуется, влияет на баланс)",
+                Spanish = "Radio de búsqueda de objetos en el suelo (predeterminado 0.3m, no se recomienda cambiar, afecta el equilibrio)"
             }
         );
 
@@ -131,6 +210,142 @@ namespace LootNearbyItem
             // 4. 最终回退
             return "TRANSLATION MISSING";
         }
+
+
+        public static SortedDictionary<string, string> BuildChineseKeyMappingDictionary()
+        {
+            var keyMapping = new SortedDictionary<string, string>();
+
+            // 添加鼠标键的翻译
+            // keyMapping.Add("左键", "Mouse0");
+            // keyMapping.Add("右键", "Mouse1");
+            keyMapping.Add("中键", "Mouse2");
+            keyMapping.Add("侧键1", "Mouse3");
+            keyMapping.Add("侧键2", "Mouse4");
+            // keyMapping.Add("侧键3", "Mouse5");
+            // keyMapping.Add("侧键4", "Mouse6");
+
+            // 添加特殊键的翻译
+            keyMapping.Add("空格", "Space");
+            // keyMapping.Add("制表键", "Tab");
+            keyMapping.Add("回车", "Return");
+            // keyMapping.Add("退出", "Escape");
+            // keyMapping.Add("退格", "Backspace");
+            // keyMapping.Add("删除", "Delete");
+
+            // keyMapping.Add("上箭头", "UpArrow");
+            // keyMapping.Add("下箭头", "DownArrow");
+            // keyMapping.Add("左箭头", "LeftArrow");
+            // keyMapping.Add("右箭头", "RightArrow");
+
+            keyMapping.Add("左Shift", "LeftShift");
+            keyMapping.Add("右Shift", "RightShift");
+            keyMapping.Add("左Ctrl", "LeftControl");
+            keyMapping.Add("右Ctrl", "RightControl");
+            keyMapping.Add("左Alt", "LeftAlt");
+            keyMapping.Add("右Alt", "RightAlt");
+
+            keyMapping.Add("大写锁定", "CapsLock");
+            // keyMapping.Add("上翻页", "PageUp");
+            // keyMapping.Add("下翻页", "PageDown");
+            // keyMapping.Add("Home", "Home");
+            // keyMapping.Add("End", "End");
+
+            // 添加字母键 (A-Z)
+            for (char c = 'A'; c <= 'Z'; c++)
+            {
+                if(c == 'A' ||c == 'W' || c == 'S' || c == 'D')
+                {
+                    continue;
+                }
+                keyMapping.Add(c.ToString(), c.ToString());
+            }
+
+            // 添加数字键 (0-9)
+            // for (char c = '0'; c <= '9'; c++)
+            // {
+            //     keyMapping.Add(c.ToString(), c.ToString());
+            // }
+
+            // 添加功能键 (F1-F12)
+            // for (int i = 1; i <= 12; i++)
+            // {
+            //     keyMapping.Add($"F{i}", $"F{i}");
+            // }
+
+            return keyMapping;
+        }
+
+        public static SortedDictionary<string, string> BuildEnglishKeyMappingDictionary()
+        {
+            var keyMapping = new SortedDictionary<string, string>();
+
+            // Add mouse button translations
+            keyMapping.Add("Middle Button", "Mouse2");
+            keyMapping.Add("Side Button 1", "Mouse3");
+            keyMapping.Add("Side Button 2", "Mouse4");
+
+            // Add special keys translations
+            keyMapping.Add("Space", "Space");
+            keyMapping.Add("Enter", "Return");
+            keyMapping.Add("Backspace", "Backspace");
+            keyMapping.Add("Delete", "Delete");
+
+            keyMapping.Add("Left Shift", "LeftShift");
+            keyMapping.Add("Right Shift", "RightShift");
+            keyMapping.Add("Left Ctrl", "LeftControl");
+            keyMapping.Add("Right Ctrl", "RightControl");
+            keyMapping.Add("Left Alt", "LeftAlt");
+            keyMapping.Add("Right Alt", "RightAlt");
+
+            keyMapping.Add("Caps Lock", "CapsLock");
+
+            // Add letter keys (A-Z)
+            for (char c = 'A'; c <= 'Z'; c++)
+            {
+                if (c == 'A' || c == 'W' || c == 'S' || c == 'D')
+                {
+                    continue;
+                }
+                keyMapping.Add(c.ToString(), c.ToString());
+            }
+
+            // Add number keys (0-9)
+            // for (char c = '0'; c <= '9'; c++)
+            // {
+            //     keyMapping.Add(c.ToString(), c.ToString());
+            // }
+
+            // Add function keys (F1-F12)
+            // for (int i = 1; i <= 12; i++)
+            // {
+            //     keyMapping.Add($"F{i}", $"F{i}");
+            // }
+
+            return keyMapping;
+        }
+
+        public static SortedDictionary<string, string> GetKeyMappingDictionary()
+        {
+            if (UseChinese())
+            {
+                return BuildChineseKeyMappingDictionary();
+            }
+            return BuildEnglishKeyMappingDictionary();
+        }
+
+        private static bool UseChinese()
+        {
+            // 根据当前语言设置描述文字
+            SystemLanguage[] chineseLanguages = {
+                SystemLanguage.Chinese,
+                SystemLanguage.ChineseSimplified,
+                SystemLanguage.ChineseTraditional
+            };
+
+            return chineseLanguages.Contains(LocalizationManager.CurrentLanguage);
+        }
+
     }
 
 }
