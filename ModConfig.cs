@@ -177,8 +177,8 @@ namespace LootNearbyItem
                               "//  鼠标键: \"Mouse0\"(左键), \"Mouse1\"(右键), \"Mouse2\"(中键), \"Mouse3\"到\"Mouse6\"(侧键)\n" +
                               "//  特殊键: \"Space\", \"Tab\", \"Return\", \"Escape\"\n" +
                               "//  方向键: \"UpArrow\", \"DownArrow\", \"LeftArrow\", \"RightArrow\"\n" +
-                              "// searchContainers: true/false - 是否搜索附近容器\n\n" +
-                              "// searchContainersRadius: 10.0 - 搜索附近容器的距离半径(0.3m-20m)\n\n" +
+                              "// searchContainers: true/false - 是否搜索附近战利品容器（击杀掉落）\n" +
+                              "// searchContainersRadius: 10.0 - 搜索附近战利品容器的距离半径(0.3m-20m)游戏默认0.3m,这里默认为10米\n\n" +
                               JsonUtility.ToJson(configData, true); // 使用美化格式
 
                 File.WriteAllText(configFilePath, json);
@@ -219,7 +219,7 @@ namespace LootNearbyItem
             _current.searchKeyCode = keyCode;
         }
 
-        public static float GetSearchRadius()
+        public static float GetSearchContainersRadius()
         {
             if (_current == null)
                 throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");

@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using ItemStatsSystem;
 using Duckov.UI;
 using System.Reflection;
+using System.Linq;
 
 namespace LootNearbyItem
 {
@@ -22,6 +23,10 @@ namespace LootNearbyItem
                 BindingFlags.NonPublic | BindingFlags.Instance);
 
         private static FieldInfo LootboxBaseOtherInterablesInGroupField = typeof(InteractableBase).GetField("otherInterablesInGroup",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // 获取私有属性信息
+        private static PropertyInfo GunBulletProperty = typeof(ItemSetting_Gun).GetProperty("bulletCount",
                 BindingFlags.NonPublic | BindingFlags.Instance);
 
         // 当前隐藏箱子
@@ -108,7 +113,7 @@ namespace LootNearbyItem
         public async UniTask AddItemsToBox(List<Item> items)
         {
             Transform? mainTrans = GetMainTransform();
-            if(mainTrans == null)
+            if (mainTrans == null)
             {
                 Debug.LogError("Get MainTrans Failed!");
                 return;
@@ -129,31 +134,54 @@ namespace LootNearbyItem
                 Debug.LogError("Create HiddenLootBox Failed!");
                 return;
             }
-            
+
             // 调整容量
             int n = items.Count;
-            currentHiddenLootBox.Inventory.SetCapacity(Math.Max(35, n % 35 == 0 ? n : n + 35 - n % 35));
+            currentHiddenLootBox.Inventory.SetCapacity(near35(n));
 
             // 再添加新物品
             foreach (var item in items)
             {
                 if (item == null) continue;
-                // 物品移动到箱子
-                item.AgentUtilities.ReleaseActiveAgent();
-                item.Detach();
-                item.Inspected = true;
-
-                // 添加到库存
-                if (!currentHiddenLootBox.Inventory.AddAndMerge(item))
+    
+                // 尝试拆分出子弹
+                var bullets = TryGetBullets(item);
+                if (null != bullets)
                 {
-                    if (!currentHiddenLootBox.Inventory.AddItem(item))
+                    foreach (var bullet in bullets)
                     {
-                        Debug.LogWarning($"无法添加物品到箱子: {item.DisplayName}");
-                        item.Drop(mainTrans.position, createRigidbody: true, Vector3.forward, 360f);
+                        // 添加到库存
+                        AddMergeOrDropItem(bullet, mainTrans);
                     }
                 }
+                // 添加到库存
+                AddMergeOrDropItem(item, mainTrans);
             }
-            
+            // 添加完毕后，由于物品堆叠，需要压缩一下Inventory容量
+            int maxIdx = currentHiddenLootBox.Inventory.GetLastItemPosition();
+            currentHiddenLootBox.Inventory.SetCapacity(near35(maxIdx));
+        }
+
+        private void AddMergeOrDropItem(Item item, Transform mainTrans)
+        {
+            // 必要的前置清理
+            item.AgentUtilities.ReleaseActiveAgent();
+            item.Detach();
+            item.Inspected = true;
+            // 添加到库存
+            if (!currentHiddenLootBox.Inventory.AddAndMerge(item))
+            {
+                if (!currentHiddenLootBox.Inventory.AddItem(item))
+                {
+                    Debug.LogWarning($"无法添加物品到箱子: {item.DisplayName}");
+                    item.Drop(mainTrans.position, createRigidbody: true, Vector3.forward, 360f);
+                }
+            }
+        }
+
+        private static int near35(int n)
+        {
+            return Math.Max(35, n % 35 == 0 ? n : n + 35 - n % 35);
         }
         
         // 打开箱子（显示战利品界面）
@@ -314,6 +342,31 @@ namespace LootNearbyItem
                 return null;
             }
             return main.transform;
+        }
+
+        public static IEnumerable<Item>? TryGetBullets(Item item)
+        {
+            if (null == item)
+            {
+                return Enumerable.Empty<Item>();
+            }
+            var gunSetting = item.GetComponent<ItemSetting_Gun>();
+            if (null == gunSetting)
+            {
+                return Enumerable.Empty<Item>();
+            }
+            // 获取子弹Item（每个Item可能包含多个堆叠）
+            var bullets = new HashSet<Item>();
+            foreach (var subItem in item.Inventory)
+            {
+                if (subItem != null && subItem.GetBool("IsBullet"))
+                {
+                    bullets.Add(subItem);
+                }
+            }
+            // 调用枪的子弹数更新函数，更新缓存
+            GunBulletProperty.SetValue(gunSetting, 0);
+            return bullets.ToList();
         }
 
     }

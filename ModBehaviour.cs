@@ -16,6 +16,7 @@ namespace LootNearbyItem
         private static readonly float KEY_DEBOUNCE_TIME = 0.5f; // 防抖时间500毫秒
         private static readonly float BUBBLES_TIME = 1.5f; // 气泡防抖时间500毫秒
         private static readonly float DEFAULT_SEARCH_RADIUS = 0.3f; // 默认搜索半径0.3m
+        private static readonly int MAX_SEARCH_COUNT = 165; // 默认最大搜索物品数量（基本是5页，每页一般35个）
 
         private float lastHKeyPressTime = 0f;
         private float lastBubbleTime = 0f;
@@ -24,19 +25,13 @@ namespace LootNearbyItem
         {
             // 初始化配置
             ModConfig.Init(ModManager.DefaultModFolderPath);
-
-            ModManager.OnModActivated += ModManager_OnModActivated;
-            ModManager.OnModWillBeDeactivated += ModManager_OnModWillBeDeactivated;
         }
 
 
         void OnDisable()
         {
-            ModManager.OnModActivated -= ModManager_OnModActivated;
-            ModManager.OnModWillBeDeactivated -= ModManager_OnModWillBeDeactivated;
-
             // 记录当前配置并保存
-            ModConfig.SaveConfig(ModManager.DefaultModFolderPath);
+            // ModConfig.SaveConfig(ModManager.DefaultModFolderPath);
         }
 
         void Update()
@@ -62,7 +57,7 @@ namespace LootNearbyItem
                 }
 
                 // 执行战利品或掉落物搜索逻辑
-                List<Item> targetItems = SearchItemAround(DEFAULT_SEARCH_RADIUS, ModConfig.GetSearchContainers(), ModConfig.GetSearchRadius(), true);
+                List<Item> targetItems = SearchItemAroundForLoot(DEFAULT_SEARCH_RADIUS, ModConfig.GetSearchContainers(), ModConfig.GetSearchContainersRadius());
                 // 添加初始物品
                 if (targetItems.Count > 0)
                 {
@@ -82,8 +77,9 @@ namespace LootNearbyItem
                         // 更新最后气泡时间
                         lastBubbleTime = Time.time;
 
-                        // 扩大检索范围3倍，确认下附近有没有可拾取的物品
-                        if (SearchItemAround(DEFAULT_SEARCH_RADIUS * 5f, ModConfig.GetSearchContainers(), ModConfig.GetSearchRadius(), false).Count > 0)
+                        // 扩大检索范围5倍，确认下附近有没有可拾取的物品
+                        if (SearchItemAroundForNotify(DEFAULT_SEARCH_RADIUS * 5f, ModConfig.GetSearchContainers(),
+                                ModConfig.GetSearchContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f))
                         {
                             DialogueBubblesManager.Show(LocalizationUtil.ItemOutOfRangeText, mainTrans, speed: 100f, duration: 1.2f);
                         }
@@ -131,9 +127,11 @@ namespace LootNearbyItem
             DynamicLootBoxManager.Instance.OnBoxClosed -= HandleBoxClosed;
         }
 
-        public static List<Item> SearchItemAround(float pickupRadius, bool enableLootbox, float lootboxRadius, bool forLoot)
+        public static List<Item> SearchItemAroundForLoot(float pickupRadius, bool enableLootbox, float lootboxRadius)
         {
-            Collider[] colliders = new Collider[100];
+            Debug.Log($"search for loot pickupRadius {pickupRadius} enableLootbox {enableLootbox} lootboxRadius  {lootboxRadius}");
+            // 为应对极端场景，最大匹配数量提高到1000，然后取最近的大概不到175个物品
+            Collider[] colliders = new Collider[1000];
             LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
             CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
 
@@ -143,17 +141,40 @@ namespace LootNearbyItem
             }
             float searchRadius = enableLootbox ? Math.Max(pickupRadius, lootboxRadius) : pickupRadius;
             Vector3 mainPosition = main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f;
+
+            // 实际搜索到的碰撞体数量
             int num = Physics.OverlapSphereNonAlloc(mainPosition, searchRadius, colliders, interactLayers);
             if (num <= 0)
             {
                 return new List<Item>();
             }
 
-            HashSet<Item> uniqueItems = new HashSet<Item>();
+            // 逐个计算距离和排序
+            float[] distances = new float[num];
             for (int i = 0; i < num; i++)
             {
                 Collider collider = colliders[i];
-                float distance = Vector3.Distance(mainPosition, collider.transform.position);
+                float distance = Vector3.Distance(mainPosition, collider.ClosestPoint(mainPosition));
+                distances[i] = distance;
+                Debug.Log("collider distance: " + distance);
+            }
+            Array.Sort(distances, colliders, 0, num);
+
+            HashSet<Item> uniqueItems = new HashSet<Item>();
+            // 从近到远遍历处理可交互物品
+            for (int i = 0; i < num; i++)
+            {
+                Collider collider = colliders[i];
+                float distance = distances[i];
+                if (distance <= pickupRadius)
+                {
+                    InteractablePickup tmpPickup = collider.GetComponent<InteractablePickup>();
+                    if (null != tmpPickup)
+                    {
+                        uniqueItems.Add(tmpPickup.ItemAgent.Item);
+                    }
+                }
+
                 if (enableLootbox && distance < lootboxRadius)
                 {
                     InteractableLootbox tmpBox = collider.GetComponent<InteractableLootbox>();
@@ -172,10 +193,62 @@ namespace LootNearbyItem
                                 }
                             }
                             // 如果后续是为了拾取，则提前标记好箱子状态为已搜索
-                            if (forLoot)
+                            tmpBox.SetMarkerUsed();
+                            tmpBox.needInspect = false;
+                        }
+                    }
+                }
+                // 如果超出了单次搜索数量，提前结束搜索
+                if (uniqueItems.Count >= MAX_SEARCH_COUNT)
+                {
+                    break;
+                }
+            }
+            return uniqueItems.ToList();
+        }
+
+        
+
+        public static bool SearchItemAroundForNotify(float pickupRadius, bool enableLootbox, float lootboxRadius)
+        {
+            Debug.Log($"search for notify pickupRadius {pickupRadius} enableLootbox {enableLootbox} lootboxRadius  {lootboxRadius}");
+            Collider[] colliders = new Collider[100];
+            LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
+            CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
+
+            if (null == main || !main.IsMainCharacter)
+            {
+                return false;
+            }
+            float searchRadius = enableLootbox ? Math.Max(pickupRadius, lootboxRadius) : pickupRadius;
+            Vector3 mainPosition = main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f;
+            int num = Physics.OverlapSphereNonAlloc(mainPosition, searchRadius, colliders, interactLayers);
+            if (num <= 0)
+            {
+                return false;
+            }
+
+            HashSet<Item> uniqueItems = new HashSet<Item>();
+            for (int i = 0; i < num; i++)
+            {
+                Collider collider = colliders[i];
+                float distance = Vector3.Distance(mainPosition, collider.ClosestPoint(mainPosition));
+                if (enableLootbox && distance < lootboxRadius)
+                {
+                    InteractableLootbox tmpBox = collider.GetComponent<InteractableLootbox>();
+                    if (null != tmpBox)
+                    {
+                        string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
+                        Debug.Log($"find loot box name key {nameKey}");
+                        // 只处理击杀掉落的战利品
+                        if ("UI_LootBox_Loot".Equals(nameKey))
+                        {
+                            foreach (var item in tmpBox.Inventory)
                             {
-                                tmpBox.SetMarkerUsed();
-                                tmpBox.needInspect = false;
+                                if (null != item)
+                                {
+                                    uniqueItems.Add(item);
+                                }
                             }
                         }
                     }
@@ -188,47 +261,13 @@ namespace LootNearbyItem
                         uniqueItems.Add(tmpPickup.ItemAgent.Item);
                     }
                 }
+                if (uniqueItems.Count > 0)
+                {
+                    return true;
+                }
+
             }
-            return uniqueItems.ToList();
-        }
-
-        private void AddUI()
-        {
-            ModSettingAPI.AddKeybinding("K1", "一键搜索散落物快捷键", ModConfig.GetSearchKeyCode(), ModConfig.SetSearchKeyCode);
-            ModSettingAPI.AddToggle("T1", "是否搜索战利品容器(击杀掉落的容器)", ModConfig.GetSearchContainers(), ModConfig.SetSearchContainers);
-
-            ModSettingAPI.AddSlider("S1", "搜索战利品容器的半径(单位m)", ModConfig.GetSearchRadius(), new Vector2(0.3f, 20f), ModConfig.SetSearchRadius);
-            // ModSettingAPI.AddButton("B1", "恢复所有默认值","重置",Reset);
-
-        }
-        private void Reset()
-        {
-            //注意：SetValue只是单方面通知UI设置值,也就是说UI的onValueChange不会被调用
-            //如果需要同步，应该先设置此mod的值，再将此mod的值设置给ModSetting。如：Dropdown1这样，其余的都只改变了UI的值并没有改变此mod的值。
-
-            ModSettingAPI.SetValue("K1", KeyCode.H);
-            ModSettingAPI.SetValue("T1", false);
-            ModSettingAPI.SetValue("S1", 10f);
-        }
-
-        private void ModManager_OnModWillBeDeactivated(ModInfo arg1, Duckov.Modding.ModBehaviour arg2)
-        {
-            if (arg1.name != ModSettingAPI.MOD_NAME || !ModSettingAPI.Init(info)) return;
-            //禁用ModSetting的时候移除监听
-            // Setting.OnSlider1ValueChanged -= Setting_OnSlider1ValueChanged;
-        }
-
-        //下面两个函数需要实现，实现后的效果是：ModSetting和mod之间不需要启动顺序，两者无论谁先启动都能正常添加设置
-        private void ModManager_OnModActivated(ModInfo arg1, Duckov.Modding.ModBehaviour arg2)
-        {
-            if (arg1.name != ModSettingAPI.MOD_NAME || !ModSettingAPI.Init(info)) return;
-            //(触发时机:此mod在ModSetting之前启用)检查启用的mod是否是ModSetting,是进行初始化
-            AddUI();
-        }
-        protected override void OnAfterSetup()
-        {
-            //(触发时机:此mod在ModSetting之后启用)此mod，Setup后,尝试进行初始化
-            if (ModSettingAPI.Init(info)) AddUI();
+            return uniqueItems.Count > 0;
         }
 
     }
