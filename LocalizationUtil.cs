@@ -79,64 +79,63 @@ namespace LootNearbyItem
         );
 
         public static string SearchHotKeySetting => GetTranslation(
-            CurrentLanguage,
-            new TranslationSet
-            {
-                ChineseSimplified = "一键搜索快捷键设置",
-                ChineseTraditional = "一鍵搜索快捷鍵設置",
-                Japanese = "ワンクリック検索ホットキー設定",
-                English = "One-click Search Hotkey Settings",
-                Korean = "원클릭 검색 단축키 설정",
-                French = "Paramètres de raccourci de recherche en un clic",
-                German = "Ein-Klick-Such-Hotkey-Einstellungen",
-                Russian = "Настройки горячих клавиш для поиска в один клик",
-                Spanish = "Configuración de tecla rápida de búsqueda con un clic"
-            }
-        );
+    CurrentLanguage,
+    new TranslationSet
+    {
+        ChineseSimplified = "一键搜索快捷键",
+        ChineseTraditional = "一鍵搜索快捷鍵",
+        Japanese = "ワンクリック検索ホットキー",
+        English = "Search Hotkey",
+        Korean = "검색 단축키",
+        French = "Racc. recherche",
+        German = "Such-Hotkey",
+        Russian = "Клавиша поиска",
+        Spanish = "Tecla búsqueda"
+    }
+);
         public static string SearchContainersSetting => GetTranslation(
             CurrentLanguage,
             new TranslationSet
             {
-                ChineseSimplified = "是否启用搜索击杀掉落的战利品盒子",
-                ChineseTraditional = "是否啟用搜索擊殺掉落的戰利品盒子",
-                Japanese = "撃破でドロップした戦利品ボックスの検索を有効にするか",
-                English = "Enable search for loot boxes from kills",
-                Korean = "처치 시 드롭된 전리품 상자 검색 활성화 여부",
-                French = "Activer la recherche des coffres de butin des ennemis vaincus",
-                German = "Suche nach Beutekisten von besiegten Gegnern aktivieren",
-                Russian = "Включить поиск ящиков с лутом после убийств",
-                Spanish = "Habilitar búsqueda de contenedores de botín de enemigos eliminados"
+                ChineseSimplified = "启用搜索敌人战利品盒子",
+                ChineseTraditional = "啟用搜索敵人戰利品盒子",
+                Japanese = "敵戦利品検索有効化",
+                English = "Search Enemy Loot",
+                Korean = "적 전리품 검색 활성화",
+                French = "Rechercher butin",
+                German = "Feindbeute suchen",
+                Russian = "Поиск вражеского лута",
+                Spanish = "Buscar botín enemigo"
             }
         );
         public static string SearchContainersRadiusSetting => GetTranslation(
             CurrentLanguage,
             new TranslationSet
             {
-                ChineseSimplified = "搜索击杀掉落战利品盒子的半径（单位m）",
-                ChineseTraditional = "搜索擊殺掉落戰利品盒子的半徑（單位m）",
-                Japanese = "撃破でドロップした戦利品ボックスの検索半径（単位m）",
-                English = "Search radius for loot boxes from kills (in meters)",
-                Korean = "처치 시 드롭된 전리품 상자 검색 반경 (단위: m)",
-                French = "Rayon de recherche pour les coffres de butin (en mètres)",
-                German = "Suchradius für Beutekisten (in Metern)",
-                Russian = "Радиус поиска ящиков с лутом (в метрах)",
-                Spanish = "Radio de búsqueda para contenedores de botín (en metros)"
+                ChineseSimplified = "敌人盒子搜索半径(建议10m)",
+                ChineseTraditional = "敵人盒子搜索半徑(建議10m)",
+                Japanese = "敵戦利品検索半径(推奨10m)",
+                English = "Loot Search Radius",
+                Korean = "전리품 검색 반경(권장10m)",
+                French = "Rayon butin",
+                German = "Beutesuchradius",
+                Russian = "Радиус поиска лута",
+                Spanish = "Radio búsqueda botín"
             }
         );
-                
         public static string SearchPickupRadiusSetting => GetTranslation(
             CurrentLanguage,
             new TranslationSet
             {
-                ChineseSimplified = "搜索地上物品的半径（官方默认0.3m，不建议修改，影响平衡）",
-                ChineseTraditional = "搜索地上物品的半徑（官方預設0.3m，不建議修改，影響平衡）",
-                Japanese = "地面アイテムの検索半径（公式デフォルト0.3m、変更非推奨、バランスに影響）",
-                English = "Ground item search radius (default 0.3m, not recommended to change, affects balance)",
-                Korean = "지면 아이템 검색 반경 (기본값 0.3m, 변경 권장하지 않음, 밸런스 영향)",
-                French = "Rayon de recherche des objets au sol (0.3m par défaut, déconseillé de modifier, affecte l'équilibre)",
-                German = "Suchradius für Bodenobjekte (Standard 0.3m, Änderung nicht empfohlen, beeinflusst Balance)",
-                Russian = "Радиус поиска предметов на земле (по умолчанию 0.3м, изменение не рекомендуется, влияет на баланс)",
-                Spanish = "Radio de búsqueda de objetos en el suelo (predeterminado 0.3m, no se recomienda cambiar, afecta el equilibrio)"
+                ChineseSimplified = "地面散落物搜索半径(建议0.3m,官方值)",
+                ChineseTraditional = "地面散落物搜索半徑(建議0.3m,官方值)",
+                Japanese = "地面アイテム検索半径(推奨0.3m)",
+                English = "Item Search Radius",
+                Korean = "아이템 검색 반경(권장0.3m)",
+                French = "Rayon objets sol",
+                German = "Objektsuchradius",
+                Russian = "Радиус поиска предметов",
+                Spanish = "Radio búsqueda objetos"
             }
         );
 
@@ -254,7 +253,7 @@ namespace LootNearbyItem
             // 添加字母键 (A-Z)
             for (char c = 'A'; c <= 'Z'; c++)
             {
-                if(c == 'A' ||c == 'W' || c == 'S' || c == 'D')
+                if (c == 'A' || c == 'W' || c == 'S' || c == 'D')
                 {
                     continue;
                 }

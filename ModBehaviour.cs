@@ -141,7 +141,7 @@ namespace LootNearbyItem
 
         public static List<Item> SearchItemAroundForLoot(float pickupRadius, bool enableLootbox, float lootboxRadius)
         {
-            Debug.Log($"search for loot pickupRadius {pickupRadius} enableLootbox {enableLootbox} lootboxRadius  {lootboxRadius}");
+            Debug.Log($"LootNearbyItem search for loot pickupRadius {pickupRadius} enableLootbox {enableLootbox} lootboxRadius  {lootboxRadius}");
             // 为应对极端场景，最大匹配数量提高到1000，然后取最近的大概不到175个物品
             Collider[] colliders = new Collider[1000];
             LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
@@ -168,7 +168,7 @@ namespace LootNearbyItem
                 Collider collider = colliders[i];
                 float distance = Vector3.Distance(mainPosition, collider.ClosestPoint(mainPosition));
                 distances[i] = distance;
-                Debug.Log("collider distance: " + distance);
+                // Debug.Log("collider distance: " + distance);
             }
             Array.Sort(distances, colliders, 0, num);
 
@@ -193,7 +193,7 @@ namespace LootNearbyItem
                     if (null != tmpBox)
                     {
                         string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
-                        Debug.Log($"find loot box name key {nameKey}");
+                        // Debug.Log($"find loot box name key {nameKey}");
                         // 只处理击杀掉落的战利品
                         if ("UI_LootBox_Loot".Equals(nameKey))
                         {
@@ -223,7 +223,7 @@ namespace LootNearbyItem
 
         public static bool SearchItemAroundForNotify(float pickupRadius, bool enableLootbox, float lootboxRadius)
         {
-            Debug.Log($"search for notify pickupRadius {pickupRadius} enableLootbox {enableLootbox} lootboxRadius  {lootboxRadius}");
+            Debug.Log($"LootNearbyItem search for notify pickupRadius {pickupRadius} enableLootbox {enableLootbox} lootboxRadius  {lootboxRadius}");
             Collider[] colliders = new Collider[100];
             LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
             CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
@@ -251,7 +251,7 @@ namespace LootNearbyItem
                     if (null != tmpBox)
                     {
                         string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
-                        Debug.Log($"find loot box name key {nameKey}");
+                        // Debug.Log($"find loot box name key {nameKey}");
                         // 只处理击杀掉落的战利品
                         if ("UI_LootBox_Loot".Equals(nameKey))
                         {

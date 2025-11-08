@@ -137,7 +137,9 @@ namespace LootNearbyItem
 
             // 调整容量
             int n = items.Count;
-            currentHiddenLootBox.Inventory.SetCapacity(near35(n));
+
+            // 预估容量增大，避免拆卸子弹导致添加物品失败
+            currentHiddenLootBox.Inventory.SetCapacity(near35(n + 35) );
 
             // 再添加新物品
             foreach (var item in items)
@@ -160,6 +162,8 @@ namespace LootNearbyItem
             // 添加完毕后，由于物品堆叠，需要压缩一下Inventory容量
             int maxIdx = currentHiddenLootBox.Inventory.GetLastItemPosition();
             currentHiddenLootBox.Inventory.SetCapacity(near35(maxIdx));
+            // 自动整理物品
+            currentHiddenLootBox.Inventory.Sort();
         }
 
         private void AddMergeOrDropItem(Item item, Transform mainTrans)
@@ -275,9 +279,10 @@ namespace LootNearbyItem
             Debug.Log($"箱子关闭，剩余物品数量: {remainItems.Count}, 开始丢出至地上腾空箱子");
             foreach (var item in remainItems)
             {
-                Debug.Log($"丢出剩余物品: {item.DisplayName}");
+                // Debug.Log($"丢出剩余物品: {item.DisplayName}");
                 item.Drop(mainTrans.position, createRigidbody: true, Vector3.forward, 360f);
             }
+            Debug.Log($"丢出剩余物品完毕");
 
             // 标记状态
             IsBoxOpen = false;
