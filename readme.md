@@ -6,10 +6,11 @@
 (注意，本mod纯粹为辅助mod，不是全图搜索，物品的一键拾取范围和人物默认拾取范围一致)
 
 除了[b]一键搜索附近地面散落的物品[/b]外，目前还支持：
-➤ 搜索附近的战利品箱子（只搜索敌人死亡后生成的箱子，并且会跳过搜索过程），本功能需要从配置中开启，默认是关闭的
+➤ 搜索附近的战利品箱子（只搜索敌人死亡后生成的箱子，并且会跳过搜索过程）（需要从配置中开启，默认是关闭的）
 ➤ 支持单独调整战利品箱子搜索半径（默认10m）
 ➤ 支持搜索附近战利品箱子时自动卸载子弹，优先搜索最近箱子。
 ➤ 支持单独调整地面散落物搜索半径（默认0.3m，官方设定值）
+➤ 支持自动拆出插槽内物品（针对武器等带插槽物品）（需要在配置中开启，默认关闭）
 
 [h2]配置已支持实时修改！[/h2]
 订阅mod [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3590674339]ModConfig[/url]并启用，加载存档后，即可在设置中修改配置并实时生效！
@@ -28,6 +29,7 @@
 [*] 2025-11-06 为右侧散落物增加了整理按钮，让物品更有序！支持搜索附近的战利品箱子（只搜索敌人生成的箱子）需要在配置中开启，默认关闭
 [*] 2025-11-07 支持调整敌人战利品箱子搜索半径，默认为10m, 并优化了极高压下的性能表现，以及支持了自动卸载子弹。
 [*] 2025-11-08 支持了游戏内设置页面实时修改配置，支持调整地上散落物搜索半径，触发搜索时自动排序
+[*] 2025-11-09 加更：支持自动拆出插槽内物品（针对武器等带插槽物品）（需要在配置中开启，默认关闭）
 [/list]
 
 [h3]更新计划[/h3]
@@ -46,6 +48,7 @@ Also supports:
 ➤ Adjustable [b]ground item search radius[/b] (default: 0.3m - vanilla value)
 ➤ Auto-unload ammo during loot searches
 ➤ Priority search for nearest container
+➤ Auto-unplug items from slots (e.g. weapons) (configurable, default off)
 [h2]Real-Time Configuration![/h2]
 Subscribe to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3590674339]ModConfig[/url] → enable → edit settings in-game with instant effect!
 Best paired with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3597089297]Detailed Weight Status[/url] ^_^
@@ -54,13 +57,13 @@ Best paired with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=359
 ➤ Like/comment if helpful!
 [h3]Updates[/h3]
 [list]
+[*] 2025-11-09: Auto-unplug items from slots (configurable)
 [*] 2025-11-08: In-game config menu, ground item radius adjustment, auto-sort
 [*] 2025-11-07: Loot radius adjustment (10m), auto-unload ammo, performance boost
 [*] 2025-11-06: Loot container support (config-off), organize button
 [*] 2025-11-05: Custom keybinds (via config)
 [*] 2025-11-04: Multi-language & proximity hints
 [/list]
-
 [h3]Planned[/h3]
 [list]
 [*] Development completed! Suggestions welcome in comments
