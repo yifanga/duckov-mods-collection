@@ -79,20 +79,21 @@ namespace LootNearbyItem
         );
 
         public static string SearchHotKeySetting => GetTranslation(
-    CurrentLanguage,
-    new TranslationSet
-    {
-        ChineseSimplified = "一键搜索快捷键",
-        ChineseTraditional = "一鍵搜索快捷鍵",
-        Japanese = "ワンクリック検索ホットキー",
-        English = "Search Hotkey",
-        Korean = "검색 단축키",
-        French = "Racc. recherche",
-        German = "Such-Hotkey",
-        Russian = "Клавиша поиска",
-        Spanish = "Tecla búsqueda"
-    }
-);
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "一键搜索快捷键",
+                ChineseTraditional = "一鍵搜索快捷鍵",
+                Japanese = "ワンクリック検索ホットキー",
+                English = "Search Hotkey",
+                Korean = "검색 단축키",
+                French = "Racc. recherche",
+                German = "Such-Hotkey",
+                Russian = "Клавиша поиска",
+                Spanish = "Tecla búsqueda"
+            }
+        );
+
         public static string SearchContainersSetting => GetTranslation(
             CurrentLanguage,
             new TranslationSet
@@ -136,6 +137,22 @@ namespace LootNearbyItem
                 German = "Objektsuchradius",
                 Russian = "Радиус поиска предметов",
                 Spanish = "Radio búsqueda objetos"
+            }
+        );
+
+        public static string AutoUnplugSlotsSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "启用自动拆卸插槽",
+                ChineseTraditional = "啟用自動拆卸插槽",
+                Japanese = "自動スロット外しを有効にする",
+                English = "Enable Auto Unplug Slots",
+                Korean = "자동 슬롯 분리 활성화",
+                French = "Activer le débranchement automatique des emplacements",
+                German = "Automatisches Ausstecken der Steckplätze aktivieren",
+                Russian = "Включить автоматическое извлечение слотов",
+                Spanish = "Habilitar extracción automática de ranuras"
             }
         );
 

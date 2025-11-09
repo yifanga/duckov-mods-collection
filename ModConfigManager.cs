@@ -17,6 +17,7 @@ namespace LootNearbyItem
         private const float DEFAULT_SEARCH_CONTAINERS_RADIUS = 10f;
         private const float DEFAULT_SEARCH_PICKUP_RADIUS = 0.3f;
         private const KeyCode DEFAULT_SEARCH_KEY_CODE = KeyCode.H;
+        private const bool DEFAULT_AUTO_UNPLUG_SLOTS = false;
         // 设置配置文件夹路径
         private static string ModFolderPath = Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME);
         private static string ConfigFilePath =  Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME, MOD_NAME);
@@ -47,6 +48,7 @@ namespace LootNearbyItem
             public bool searchContainers = DEFAULT_SEARCH_CONTAINERS;
             public float searchContainersRadius = DEFAULT_SEARCH_CONTAINERS_RADIUS;
             public float searchPickupRadius = DEFAULT_SEARCH_PICKUP_RADIUS;
+            public bool autoUnplugSlots = DEFAULT_AUTO_UNPLUG_SLOTS;
             
             [NonSerialized]
             public KeyCode searchKeyCode = DEFAULT_SEARCH_KEY_CODE;
@@ -60,7 +62,8 @@ namespace LootNearbyItem
                 searchContainers = DEFAULT_SEARCH_CONTAINERS,
                 searchContainersRadius = DEFAULT_SEARCH_CONTAINERS_RADIUS,
                 searchPickupRadius = DEFAULT_SEARCH_PICKUP_RADIUS,
-                searchKeyCode = DEFAULT_SEARCH_KEY_CODE
+                searchKeyCode = DEFAULT_SEARCH_KEY_CODE,
+                autoUnplugSlots = DEFAULT_AUTO_UNPLUG_SLOTS
             };
         }
 
@@ -188,7 +191,8 @@ namespace LootNearbyItem
                               "//  方向键: \"UpArrow\", \"DownArrow\", \"LeftArrow\", \"RightArrow\"\n" +
                               "// searchContainers: true/false - 是否搜索附近战利品容器（击杀掉落）\n" +
                               "// searchContainersRadius: 10.0 - 搜索附近战利品容器的距离半径(0.3m-20m)游戏默认0.3m,这里默认为10米\n" +
-                              "// searchPickupRadius: 0.3 - 搜索附近物品的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n\n" +
+                              "// searchPickupRadius: 0.3 - 搜索附近物品的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n" +
+                              "// autoUnplugSlots: false - 搜索是否自动拆出配件槽内物品\n\n" +
                               JsonUtility.ToJson(configData, true); // 使用美化格式
 
                 File.WriteAllText(configFilePath, json);
@@ -284,6 +288,22 @@ namespace LootNearbyItem
             _current.searchContainers = enableSearch; // 直接返回缓存值
         }
 
+        public static bool GetAutoUnplugSlots()
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            return _current.autoUnplugSlots; // 直接返回缓存值
+        }
+
+        public static void SetAutoUnplugSlots(bool enableAutoUnplug)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            _current.autoUnplugSlots = enableAutoUnplug; // 直接返回缓存值
+        }
+
         public static void OnModConfigMenuActivated(ModInfo info, Duckov.Modding.ModBehaviour behaviour)
         {
             if (info.name == ModConfigAPI.ModConfigName)
@@ -307,6 +327,14 @@ namespace LootNearbyItem
             // 添加配置变更监听
             ModConfigAPI.SafeAddOnOptionsChangedDelegate(OnModConfigOptionsChanged);
             ConfigData defaultConfig = CreateDefaultConfig();
+
+            ModConfigAPI.SafeAddBoolDropdownList(
+                MOD_NAME,
+                "AutoUnplugSlots",
+                LocalizationUtil.AutoUnplugSlotsSetting,
+                GetAutoUnplugSlots()
+            );
+
 
             ModConfigAPI.SafeAddInputWithSlider(
                 MOD_NAME,
@@ -367,6 +395,7 @@ namespace LootNearbyItem
             SetSearchContainers(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "SearchContainersSetting", DEFAULT_SEARCH_CONTAINERS));
             SetSearchContainersRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchContainersRadiusSetting", DEFAULT_SEARCH_CONTAINERS_RADIUS));
             SetSearchPickupRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchPickupRadiusSetting", DEFAULT_SEARCH_PICKUP_RADIUS));
+            SetAutoUnplugSlots(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "AutoUnplugSlots", DEFAULT_AUTO_UNPLUG_SLOTS));
         }
 
 

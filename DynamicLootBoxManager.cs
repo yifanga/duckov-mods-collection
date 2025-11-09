@@ -6,6 +6,7 @@ using ItemStatsSystem;
 using Duckov.UI;
 using System.Reflection;
 using System.Linq;
+using ItemStatsSystem.Items;
 
 namespace LootNearbyItem
 {
@@ -80,7 +81,7 @@ namespace LootNearbyItem
         }
 
         // 配置箱子加载器
-        
+
 
         // 添加以下两个辅助方法到类中
         public static void SetPrivateField<T>(object target, string fieldName, T value)
@@ -139,23 +140,31 @@ namespace LootNearbyItem
             int n = items.Count;
 
             // 预估容量增大，避免拆卸子弹导致添加物品失败
-            currentHiddenLootBox.Inventory.SetCapacity(near35(n + 35) );
+            currentHiddenLootBox.Inventory.SetCapacity(near35(n + 70));
 
             // 再添加新物品
             foreach (var item in items)
             {
                 if (item == null) continue;
-    
+
                 // 尝试拆分出子弹
                 var bullets = TryGetBullets(item);
-                if (null != bullets)
+                foreach (var bullet in bullets)
                 {
-                    foreach (var bullet in bullets)
+                    // 添加到库存
+                    AddMergeOrDropItem(bullet, mainTrans);
+                }
+
+                //如果开启自动拆卸插槽，则尝试拆卸
+                if (ModConfigManager.GetAutoUnplugSlots())
+                {
+                    var slotItems = TryGetSlotItems(item);
+                    foreach (var slotItem in slotItems)
                     {
-                        // 添加到库存
-                        AddMergeOrDropItem(bullet, mainTrans);
+                        AddMergeOrDropItem(slotItem, mainTrans);
                     }
                 }
+
                 // 添加到库存
                 AddMergeOrDropItem(item, mainTrans);
             }
@@ -187,7 +196,7 @@ namespace LootNearbyItem
         {
             return Math.Max(35, n % 35 == 0 ? n : n + 35 - n % 35);
         }
-        
+
         // 打开箱子（显示战利品界面）
         public void OpenLootBox()
         {
@@ -257,7 +266,7 @@ namespace LootNearbyItem
             if (!IsBoxOpen) return;
 
             Transform? mainTrans = GetMainTransform();
-            if(mainTrans == null)
+            if (mainTrans == null)
             {
                 Debug.LogError("Get MainTrans Failed!");
                 return;
@@ -349,7 +358,7 @@ namespace LootNearbyItem
             return main.transform;
         }
 
-        public static IEnumerable<Item>? TryGetBullets(Item item)
+        public static IEnumerable<Item> TryGetBullets(Item item)
         {
             if (null == item)
             {
@@ -372,6 +381,30 @@ namespace LootNearbyItem
             // 调用枪的子弹数更新函数，更新缓存
             GunBulletProperty.SetValue(gunSetting, 0);
             return bullets.ToList();
+        }
+
+        public static IEnumerable<Item> TryGetSlotItems(Item item)
+        {
+            if (null == item)
+            {
+                return Enumerable.Empty<Item>();
+            }
+            var itemSlots = item.Slots;
+            if (null == itemSlots)
+            {
+                return Enumerable.Empty<Item>();
+            }
+            // 获取插槽内的内容
+            var slotSubItems = new HashSet<Item>();
+            foreach (Slot slot in itemSlots)
+            {
+                Item slotItem = slot.Unplug();
+                if (slotItem != null)
+                {
+                    slotSubItems.Add(slotItem);
+                }
+            }
+            return slotSubItems.ToList();
         }
 
     }
