@@ -68,7 +68,7 @@ namespace LootNearbyItem
                 }
 
                 // 执行战利品或掉落物搜索逻辑
-                List<Item> targetItems = SearchItemAroundForLoot(ModConfigManager.GetSearchPickupRadius(), ModConfigManager.GetSearchContainers(), ModConfigManager.GetSearchContainersRadius());
+                List<Item> targetItems = SearchItemAroundForLoot(ModConfigManager.GetSearchPickupRadius(), ModConfigManager.GetSearchContainers(), ModConfigManager.GetSearchContainersRadius(), ModConfigManager.GetSearchOtherContainers(), ModConfigManager.GetSearchOtherContainersRadius());
                 // 添加初始物品
                 if (targetItems.Count > 0)
                 {
@@ -91,7 +91,9 @@ namespace LootNearbyItem
                         // 扩大检索范围5倍，确认下附近有没有可拾取的物品
                         if (SearchItemAroundForNotify(ModConfigManager.GetSearchPickupRadius() + DEFAULT_SEARCH_RADIUS * 4f,
                                 ModConfigManager.GetSearchContainers(),
-                                ModConfigManager.GetSearchContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f))
+                                ModConfigManager.GetSearchContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f,
+                                ModConfigManager.GetSearchOtherContainers(),
+                                ModConfigManager.GetSearchOtherContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f))
                         {
                             DialogueBubblesManager.Show(LocalizationUtil.ItemOutOfRangeText, mainTrans, speed: 100f, duration: 1.2f);
                         }
@@ -139,9 +141,10 @@ namespace LootNearbyItem
             DynamicLootBoxManager.Instance.OnBoxClosed -= HandleBoxClosed;
         }
 
-        public static List<Item> SearchItemAroundForLoot(float pickupRadius, bool enableLootbox, float lootboxRadius)
+        public static List<Item> SearchItemAroundForLoot(float pickupRadius, bool enableEnemyLootbox,
+                float enemyLootboxRadius, bool enableOtherLootbox, float otherLootboxRadius)
         {
-            Debug.Log($"LootNearbyItem search for loot pickupRadius {pickupRadius} enableLootbox {enableLootbox} lootboxRadius  {lootboxRadius}");
+            Debug.Log($"LootNearbyItem search for loot pickupRadius {pickupRadius} enableEnemyLootbox {enableEnemyLootbox} enemyLootboxRadius  {enemyLootboxRadius} enableOtherLootbox {enableOtherLootbox} otherLootboxRadius {otherLootboxRadius}");
             // 为应对极端场景，最大匹配数量提高到1000，然后取最近的大概不到175个物品
             Collider[] colliders = new Collider[1000];
             LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
@@ -151,7 +154,11 @@ namespace LootNearbyItem
             {
                 return new List<Item>();
             }
-            float searchRadius = enableLootbox ? Math.Max(pickupRadius, lootboxRadius) : pickupRadius;
+
+            float searchRadius = Math.Max(pickupRadius,
+                    Math.Max(enableEnemyLootbox ? enemyLootboxRadius : 0f,
+                             enableOtherLootbox ? otherLootboxRadius : 0f));
+
             Vector3 mainPosition = main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f;
 
             // 实际搜索到的碰撞体数量
@@ -187,15 +194,24 @@ namespace LootNearbyItem
                     }
                 }
 
-                if (enableLootbox && distance < lootboxRadius)
+                bool meetEnemyBox = enableEnemyLootbox && distance < enemyLootboxRadius;
+                bool meetOtherBox = enableOtherLootbox && distance < otherLootboxRadius;
+
+                if (meetEnemyBox || meetOtherBox)
                 {
                     InteractableLootbox tmpBox = collider.GetComponent<InteractableLootbox>();
                     if (null != tmpBox)
                     {
                         string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
-                        // Debug.Log($"find loot box name key {nameKey}");
-                        // 只处理击杀掉落的战利品
-                        if ("UI_LootBox_Loot".Equals(nameKey))
+                        // Debug.Log($"find loot box name key {nameKey} meetEnemyBox{meetEnemyBox} meetOtherBox {meetOtherBox} requireItem {tmpBox.requireItem}");
+
+                        bool isEnemyBox = "UI_LootBox_Loot".Equals(nameKey);
+                        bool isOtherBox = !isEnemyBox &&
+                                ((null != nameKey && nameKey.StartsWith("UI_LootBox"))
+                                || "UI_Interact_Cloth".Equals(nameKey)
+                                || "UI_Interact_Tomb".Equals(nameKey));
+                        // 处理击杀掉落的战利品盒子, 或者非击杀掉落且不需要物品条件的盒子
+                        if ((meetEnemyBox && isEnemyBox) || (meetOtherBox && !tmpBox.requireItem && isOtherBox))
                         {
                             foreach (var item in tmpBox.Inventory)
                             {
@@ -208,6 +224,7 @@ namespace LootNearbyItem
                             tmpBox.SetMarkerUsed();
                             tmpBox.needInspect = false;
                         }
+
                     }
                 }
                 // 如果超出了单次搜索数量，提前结束搜索
@@ -221,10 +238,12 @@ namespace LootNearbyItem
 
 
 
-        public static bool SearchItemAroundForNotify(float pickupRadius, bool enableLootbox, float lootboxRadius)
+        public static bool SearchItemAroundForNotify(float pickupRadius, bool enableEnemyLootbox,
+                float enemyLootboxRadius, bool enableOtherLootbox, float otherLootboxRadius)
         {
-            Debug.Log($"LootNearbyItem search for notify pickupRadius {pickupRadius} enableLootbox {enableLootbox} lootboxRadius  {lootboxRadius}");
-            Collider[] colliders = new Collider[100];
+            Debug.Log($"LootNearbyItem search for notify pickupRadius {pickupRadius} enableEnemyLootbox {enableEnemyLootbox} enemyLootboxRadius  {enemyLootboxRadius} enableOtherLootbox {enableOtherLootbox} otherLootboxRadius {otherLootboxRadius}");
+            // 为应对极端场景，最大匹配数量提高到1000，然后取最近的大概不到175个物品
+            Collider[] colliders = new Collider[1000];
             LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
             CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
 
@@ -232,54 +251,62 @@ namespace LootNearbyItem
             {
                 return false;
             }
-            float searchRadius = enableLootbox ? Math.Max(pickupRadius, lootboxRadius) : pickupRadius;
+            float searchRadius = Math.Max(pickupRadius,
+                    Math.Max(enableEnemyLootbox ? enemyLootboxRadius : 0f,
+                             enableOtherLootbox ? otherLootboxRadius : 0f));
+
             Vector3 mainPosition = main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f;
+
+            // 实际搜索到的碰撞体数量
             int num = Physics.OverlapSphereNonAlloc(mainPosition, searchRadius, colliders, interactLayers);
             if (num <= 0)
             {
                 return false;
             }
 
-            HashSet<Item> uniqueItems = new HashSet<Item>();
+            // 从近到远遍历处理可交互物品
             for (int i = 0; i < num; i++)
             {
                 Collider collider = colliders[i];
                 float distance = Vector3.Distance(mainPosition, collider.ClosestPoint(mainPosition));
-                if (enableLootbox && distance < lootboxRadius)
-                {
-                    InteractableLootbox tmpBox = collider.GetComponent<InteractableLootbox>();
-                    if (null != tmpBox)
-                    {
-                        string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
-                        // Debug.Log($"find loot box name key {nameKey}");
-                        // 只处理击杀掉落的战利品
-                        if ("UI_LootBox_Loot".Equals(nameKey))
-                        {
-                            foreach (var item in tmpBox.Inventory)
-                            {
-                                if (null != item)
-                                {
-                                    uniqueItems.Add(item);
-                                }
-                            }
-                        }
-                    }
-                }
+
                 if (distance <= pickupRadius)
                 {
                     InteractablePickup tmpPickup = collider.GetComponent<InteractablePickup>();
                     if (null != tmpPickup)
                     {
-                        uniqueItems.Add(tmpPickup.ItemAgent.Item);
+                        return true;
                     }
                 }
-                if (uniqueItems.Count > 0)
-                {
-                    return true;
-                }
 
+                bool meetEnemyBox = enableEnemyLootbox && distance < enemyLootboxRadius;
+                bool meetOtherBox = enableOtherLootbox && distance < otherLootboxRadius;
+
+                if (meetEnemyBox || meetOtherBox)
+                {
+                    InteractableLootbox tmpBox = collider.GetComponent<InteractableLootbox>();
+                    if (null != tmpBox)
+                    {
+                        string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
+                        // Debug.Log($"find loot box for notify name key {nameKey} meetEnemyBox{meetEnemyBox} meetOtherBox {meetOtherBox} requireItem {tmpBox.requireItem}");
+
+                        bool isEnemyBox = "UI_LootBox_Loot".Equals(nameKey);
+                        // 处理击杀掉落的战利品盒子, 或者非击杀掉落且不需要物品条件的盒子
+                        if ((meetEnemyBox && isEnemyBox) || (meetOtherBox && !tmpBox.requireItem && !isEnemyBox))
+                        {
+                            foreach (var item in tmpBox.Inventory)
+                            {
+                                if (null != item)
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+
+                    }
+                }
             }
-            return uniqueItems.Count > 0;
+            return false;
         }
 
     }

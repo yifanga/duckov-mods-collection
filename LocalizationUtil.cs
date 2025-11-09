@@ -144,15 +144,61 @@ namespace LootNearbyItem
             CurrentLanguage,
             new TranslationSet
             {
-                ChineseSimplified = "启用自动拆卸插槽",
-                ChineseTraditional = "啟用自動拆卸插槽",
-                Japanese = "自動スロット外しを有効にする",
-                English = "Enable Auto Unplug Slots",
-                Korean = "자동 슬롯 분리 활성화",
-                French = "Activer le débranchement automatique des emplacements",
-                German = "Automatisches Ausstecken der Steckplätze aktivieren",
-                Russian = "Включить автоматическое извлечение слотов",
-                Spanish = "Habilitar extracción automática de ranuras"
+                ChineseSimplified = "启用自动拆卸插槽(全局生效)",
+                ChineseTraditional = "啟用自動拆卸插槽(全域生效)",
+                Japanese = "自動スロット外し(グローバル)",
+                English = "Auto Unplug Slots (Global)",
+                Korean = "자동 슬롯 분리 (전역)",
+                French = "Débranchement auto (Global)",
+                German = "Auto-Ausstecken (Global)",
+                Russian = "Автоизвлечение слотов (глоб.)",
+                Spanish = "Extracción auto (Global)"
+            }
+        );
+
+        public static string SearchOtherContainersSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "启用搜索除敌人盒子外容器",
+                ChineseTraditional = "啟用搜索除敵人盒子外容器",
+                Japanese = "非敵コンテナ検索",
+                English = "Search non-enemy containers",
+                Korean = "비적 상자 검색",
+                French = "Recherche conteneurs non-ennemis",
+                German = "Suche nicht-feindliche Behälter",
+                Russian = "Поиск не вражеских контейнеров",
+                Spanish = "Buscar contenedores no enemigos"
+            }
+        );
+        public static string SearchOtherContainersRadiusSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "除敌人盒子外容器搜索半径(建议0.3m,官方值)",
+                ChineseTraditional = "除敵人盒子外容器搜索半徑(建議0.3m,官方值)",
+                Japanese = "非敵コンテナ半径(推奨0.3m)",
+                English = "Non-enemy container radius (rec. 0.3m)",
+                Korean = "비적 상자 반경 (권장 0.3m)",
+                French = "Rayon conteneurs non-ennemis (rec. 0.3m)",
+                German = "Radius nicht-feindliche Behälter (emp. 0.3m)",
+                Russian = "Радиус не вражеских контейнеров (рец. 0.3м)",
+                Spanish = "Radio contenedores no enemigos (rec. 0.3m)"
+            }
+        );
+        public static string IgnoreOtherContainersRequiredSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "启用搜索带条件的除敌人盒子外容器(钥匙/铲子等)",
+                ChineseTraditional = "搜索帶條件的盒子外容器(鑰匙/鏟子)",
+                Japanese = "条件付きコンテナ検索(鍵/シャベル等)",
+                English = "Search containers with requirements (key/shovel etc.)",
+                Korean = "조건부 컨테이너 검색 (열쇠/삽 등)",
+                French = "Recherche conteneurs conditionnels (clé/pelle etc.)",
+                German = "Suche Behälter mit Anforderungen (Schlüssel/Schaufel etc.)",
+                Russian = "Поиск контейнеров с условиями (ключ/лопата и др.)",
+                Spanish = "Buscar contenedores con requisitos (llave/pala etc.)"
             }
         );
 

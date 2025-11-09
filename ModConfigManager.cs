@@ -18,9 +18,12 @@ namespace LootNearbyItem
         private const float DEFAULT_SEARCH_PICKUP_RADIUS = 0.3f;
         private const KeyCode DEFAULT_SEARCH_KEY_CODE = KeyCode.H;
         private const bool DEFAULT_AUTO_UNPLUG_SLOTS = false;
+        private const bool DEFAULT_SEARCH_OTHER_CONTAINERS = false;
+        private const float DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS = 0.3f;
+        // private const bool DEFAULT_SEARCH_OTHER_CONTAINERS_WITH_REQUIRE = false;
         // 设置配置文件夹路径
         private static string ModFolderPath = Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME);
-        private static string ConfigFilePath =  Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME, MOD_NAME);
+        private static string ConfigFilePath = Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME, MOD_NAME);
 
         // 常用特殊键
         private static readonly string[] ValidKeys =
@@ -49,7 +52,11 @@ namespace LootNearbyItem
             public float searchContainersRadius = DEFAULT_SEARCH_CONTAINERS_RADIUS;
             public float searchPickupRadius = DEFAULT_SEARCH_PICKUP_RADIUS;
             public bool autoUnplugSlots = DEFAULT_AUTO_UNPLUG_SLOTS;
-            
+            public bool searchOtherContainers = DEFAULT_SEARCH_OTHER_CONTAINERS;
+            public float searchOtherContainersRadius = DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS;
+
+            // public bool searchOtherContainersWithRequire = DEFAULT_SEARCH_OTHER_CONTAINERS_WITH_REQUIRE;
+
             [NonSerialized]
             public KeyCode searchKeyCode = DEFAULT_SEARCH_KEY_CODE;
         }
@@ -63,7 +70,10 @@ namespace LootNearbyItem
                 searchContainersRadius = DEFAULT_SEARCH_CONTAINERS_RADIUS,
                 searchPickupRadius = DEFAULT_SEARCH_PICKUP_RADIUS,
                 searchKeyCode = DEFAULT_SEARCH_KEY_CODE,
-                autoUnplugSlots = DEFAULT_AUTO_UNPLUG_SLOTS
+                autoUnplugSlots = DEFAULT_AUTO_UNPLUG_SLOTS,
+                searchOtherContainers = DEFAULT_SEARCH_OTHER_CONTAINERS,
+                searchOtherContainersRadius = DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS,
+                // searchOtherContainersWithRequire = DEFAULT_SEARCH_OTHER_CONTAINERS_WITH_REQUIRE
             };
         }
 
@@ -192,7 +202,10 @@ namespace LootNearbyItem
                               "// searchContainers: true/false - 是否搜索附近战利品容器（击杀掉落）\n" +
                               "// searchContainersRadius: 10.0 - 搜索附近战利品容器的距离半径(0.3m-20m)游戏默认0.3m,这里默认为10米\n" +
                               "// searchPickupRadius: 0.3 - 搜索附近物品的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n" +
-                              "// autoUnplugSlots: false - 搜索是否自动拆出配件槽内物品\n\n" +
+                              "// autoUnplugSlots: false - 搜索是否自动拆出配件槽内物品（全局生效）\n" +
+                              "// searchOtherContainers: false - 是否搜索非击杀掉落的所有容器\n" +
+                              "// searchOtherContainersRadius: 0.3 - 搜索非击杀掉落容器的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n\n" +
+                              //   "// searchOtherContainersWithRequire: false - 是否忽略非击杀掉落容器搜索条件(钥匙铲子等)\n\n" +
                               JsonUtility.ToJson(configData, true); // 使用美化格式
 
                 File.WriteAllText(configFilePath, json);
@@ -236,6 +249,22 @@ namespace LootNearbyItem
             }
             _current.searchKey = keyCodeStr;
             _current.searchKeyCode = keyCode;
+        }
+
+        public static bool GetAutoUnplugSlots()
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            return _current.autoUnplugSlots; // 直接返回缓存值
+        }
+
+        public static void SetAutoUnplugSlots(bool enableAutoUnplug)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            _current.autoUnplugSlots = enableAutoUnplug; // 直接返回缓存值
         }
 
         public static float GetSearchContainersRadius()
@@ -288,21 +317,49 @@ namespace LootNearbyItem
             _current.searchContainers = enableSearch; // 直接返回缓存值
         }
 
-        public static bool GetAutoUnplugSlots()
+        public static bool GetSearchOtherContainers()
         {
             if (_current == null)
                 throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
-
-            return _current.autoUnplugSlots; // 直接返回缓存值
+            return _current.searchOtherContainers;
         }
 
-        public static void SetAutoUnplugSlots(bool enableAutoUnplug)
+        public static void SetSearchOtherContainers(bool enableSearch)
         {
             if (_current == null)
                 throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
-
-            _current.autoUnplugSlots = enableAutoUnplug; // 直接返回缓存值
+            _current.searchOtherContainers = enableSearch;
         }
+
+        public static float GetSearchOtherContainersRadius()
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+            float clampVal = Mathf.Clamp(_current.searchOtherContainersRadius, 0.3f, 20f);
+            _current.searchOtherContainersRadius = clampVal;
+            return clampVal;
+        }
+
+        public static void SetSearchOtherContainersRadius(float radius)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+            _current.searchOtherContainersRadius = Mathf.Clamp(radius, 0.3f, 20f);
+        }
+
+        // public static bool GetSearchOtherContainersWithRequire()
+        // {
+        //     if (_current == null)
+        //         throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+        //     return _current.searchOtherContainersWithRequire;
+        // }
+
+        // public static void SetSearchOtherContainersWithRequire(bool enableSearch)
+        // {
+        //     if (_current == null)
+        //         throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+        //     _current.searchOtherContainersWithRequire = enableSearch;
+        // }
 
         public static void OnModConfigMenuActivated(ModInfo info, Duckov.Modding.ModBehaviour behaviour)
         {
@@ -328,14 +385,7 @@ namespace LootNearbyItem
             ModConfigAPI.SafeAddOnOptionsChangedDelegate(OnModConfigOptionsChanged);
             ConfigData defaultConfig = CreateDefaultConfig();
 
-            ModConfigAPI.SafeAddBoolDropdownList(
-                MOD_NAME,
-                "AutoUnplugSlots",
-                LocalizationUtil.AutoUnplugSlotsSetting,
-                GetAutoUnplugSlots()
-            );
-
-
+            // 搜索散落物半径调整放到最下方
             ModConfigAPI.SafeAddInputWithSlider(
                 MOD_NAME,
                 "SearchPickupRadiusSetting",
@@ -344,7 +394,31 @@ namespace LootNearbyItem
                 GetSearchPickupRadius(),
                 new Vector2(0.3f, 20f)
             );
-            
+
+            // ModConfigAPI.SafeAddBoolDropdownList(
+            //     MOD_NAME,
+            //     "IgnoreOtherContainersRequiredSetting",
+            //     LocalizationUtil.IgnoreOtherContainersRequiredSetting,
+            //     GetAutoUnplugSlots()
+            // );
+
+
+            ModConfigAPI.SafeAddInputWithSlider(
+                MOD_NAME,
+                "SearchOtherContainersRadiusSetting",
+                LocalizationUtil.SearchOtherContainersRadiusSetting,
+                typeof(float),
+                GetSearchOtherContainersRadius(),
+                new Vector2(0.3f, 20f)
+            );
+
+            ModConfigAPI.SafeAddBoolDropdownList(
+                MOD_NAME,
+                "SearchOtherContainersSetting",
+                LocalizationUtil.SearchOtherContainersSetting,
+                GetSearchOtherContainers()
+            );
+
             ModConfigAPI.SafeAddInputWithSlider(
                 MOD_NAME,
                 "SearchContainersRadiusSetting",
@@ -362,6 +436,14 @@ namespace LootNearbyItem
                 GetSearchContainers()
             );
 
+            // 是否自动拆出插槽内物品，开启后全局生效
+            ModConfigAPI.SafeAddBoolDropdownList(
+                MOD_NAME,
+                "AutoUnplugSlots",
+                LocalizationUtil.AutoUnplugSlotsSetting,
+                GetAutoUnplugSlots()
+            );
+
             ModConfigAPI.SafeAddDropdownList(
                 MOD_NAME,
                 "SearchHotKeySetting",
@@ -370,7 +452,7 @@ namespace LootNearbyItem
                 typeof(string),
                 GetSearchKeyCode().ToString()
             );
-            
+
             Debug.Log("DisplayItemValue: ModConfig setup completed");
         }
 
@@ -392,22 +474,24 @@ namespace LootNearbyItem
         {
             // 使用新的 LoadConfig 方法读取所有配置
             SetSearchKeyCode(ModConfigAPI.SafeLoad<string>(MOD_NAME, "SearchHotKeySetting", DEFAULT_SEARCH_KEY));
+            SetAutoUnplugSlots(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "AutoUnplugSlots", DEFAULT_AUTO_UNPLUG_SLOTS));
             SetSearchContainers(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "SearchContainersSetting", DEFAULT_SEARCH_CONTAINERS));
             SetSearchContainersRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchContainersRadiusSetting", DEFAULT_SEARCH_CONTAINERS_RADIUS));
             SetSearchPickupRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchPickupRadiusSetting", DEFAULT_SEARCH_PICKUP_RADIUS));
-            SetAutoUnplugSlots(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "AutoUnplugSlots", DEFAULT_AUTO_UNPLUG_SLOTS));
+            SetSearchOtherContainers(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "SearchOtherContainersSetting", DEFAULT_SEARCH_OTHER_CONTAINERS));
+            SetSearchOtherContainersRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchOtherContainersRadiusSetting", DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS));
         }
 
 
         public static SortedDictionary<string, object> ConvertToObjectDictionary<TValue>(SortedDictionary<string, TValue> sourceDict)
         {
             var objectDict = new SortedDictionary<string, object>();
-            
+
             foreach (var kvp in sourceDict)
             {
                 objectDict.Add(kvp.Key, kvp.Value);
             }
-            
+
             return objectDict;
         }
     }
