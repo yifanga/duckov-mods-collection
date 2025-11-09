@@ -30,6 +30,22 @@ namespace LootNearbyItem
             }
         );
 
+        public static string TempTrashCanText => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "临时垃圾堆",
+                ChineseTraditional = "臨時垃圾堆",
+                Japanese = "一時的なゴミ箱",
+                English = "Temporary Trash Can",
+                Korean = "임시 쓰레기통",
+                French = "Poubelle temporaire",
+                German = "Temporärer Mülleimer",
+                Russian = "Временная корзина",
+                Spanish = "Contenedor temporal"
+            }
+        );
+
         // 获取"不要找啦，附近没有散落物！"的翻译
         public static string NoScatteredObjectsText => GetTranslation(
             CurrentLanguage,
@@ -186,6 +202,7 @@ namespace LootNearbyItem
                 Spanish = "Radio contenedores no enemigos (rec. 0.3m)"
             }
         );
+
         public static string IgnoreOtherContainersRequiredSetting => GetTranslation(
             CurrentLanguage,
             new TranslationSet
@@ -199,6 +216,22 @@ namespace LootNearbyItem
                 German = "Suche Behälter mit Anforderungen (Schlüssel/Schaufel etc.)",
                 Russian = "Поиск контейнеров с условиями (ключ/лопата и др.)",
                 Spanish = "Buscar contenedores con requisitos (llave/pala etc.)"
+            }
+        );
+
+        public static string GenerateTempTrashCanSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = $"是否在脚下生成临时垃圾堆盒子(实验性,大于{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}个触发)",
+                ChineseTraditional = $"是否在腳下生成臨時垃圾堆盒子(實驗性,大於{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}個觸發)",
+                Japanese = $"足元に一時ゴミ箱生成? (実験的, {DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}個以上)",
+                English = $"Generate temp trash can? (Exp, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} items)",
+                Korean = $"임시 쓰레기통 생성? (실험, {DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}개 이상)",
+                French = $"Générer poubelle temp? (Exp, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} objets)",
+                German = $"Temp-Mülleimer generieren? (Exp, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} Gegenstände)",
+                Russian = $"Создать временную корзину? (Эксп, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} предметов)",
+                Spanish = $"¿Generar contenedor temp? (Exp, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} objetos)"
             }
         );
 

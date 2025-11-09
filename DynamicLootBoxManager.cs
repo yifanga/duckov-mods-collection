@@ -7,6 +7,7 @@ using Duckov.UI;
 using System.Reflection;
 using System.Linq;
 using ItemStatsSystem.Items;
+using Duckov.Utilities;
 
 namespace LootNearbyItem
 {
@@ -14,6 +15,8 @@ namespace LootNearbyItem
 
     public class DynamicLootBoxManager : MonoBehaviour
     {
+
+        public const int GENERATOR_TEMP_TRASH_CAN_THRESHOLD = 15;
         // 单例模式
         public static DynamicLootBoxManager Instance { get; private set; }
 
@@ -29,6 +32,10 @@ namespace LootNearbyItem
         // 获取私有属性信息
         private static PropertyInfo GunBulletProperty = typeof(ItemSetting_Gun).GetProperty("bulletCount",
                 BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // 获取Inventory属性（包含非公共成员）
+        PropertyInfo ItemInventoryProperty = typeof(Item).GetProperty("Inventory", 
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
 
         // 当前隐藏箱子
         private InteractableLootbox currentHiddenLootBox;
@@ -170,7 +177,7 @@ namespace LootNearbyItem
             }
             // 添加完毕后，由于物品堆叠，需要压缩一下Inventory容量
             int maxIdx = currentHiddenLootBox.Inventory.GetLastItemPosition();
-            currentHiddenLootBox.Inventory.SetCapacity(near35(maxIdx));
+            currentHiddenLootBox.Inventory.SetCapacity(near35(maxIdx + 1));
             // 自动整理物品
             currentHiddenLootBox.Inventory.Sort();
         }
@@ -284,14 +291,32 @@ namespace LootNearbyItem
                     }
                 }
             }
-
-            Debug.Log($"箱子关闭，剩余物品数量: {remainItems.Count}, 开始丢出至地上腾空箱子");
-            foreach (var item in remainItems)
+            // 实验性功能，支持临时生成垃圾堆
+            if (null != currentHiddenLootBox && ModConfigManager.GetGeneratorTempTrashCan()
+                    && remainItems.Count > GENERATOR_TEMP_TRASH_CAN_THRESHOLD)
             {
-                // Debug.Log($"丢出剩余物品: {item.DisplayName}");
-                item.Drop(mainTrans.position, createRigidbody: true, Vector3.forward, 360f);
+                Debug.Log($"箱子关闭，剩余物品数量: {remainItems.Count}, 物品较多开始生成盒子");
+                // 临时构造item用于初始化lootbox
+                GameObject itemObject = new GameObject("AgentItem");
+                Item agentItem = itemObject.AddComponent<Item>();
+                ItemInventoryProperty.SetValue(agentItem, currentHiddenLootBox.Inventory);
+
+                InteractableLootbox tmpBox = InteractableLootbox.CreateFromItem(agentItem, mainTrans.position, mainTrans.rotation, moveToMainScene: true, GameplayDataSettings.Prefabs.LootBoxPrefab, filterDontDropOnDead: false);
+                LootboxDisplayNameKeyField.SetValue(tmpBox, LocalizationUtil.TempTrashCanText);
+                // 清理临时构造的item
+                ItemInventoryProperty.SetValue(agentItem, null);
+                Destroy(itemObject);
             }
-            Debug.Log($"丢出剩余物品完毕");
+            else
+            {
+                Debug.Log($"箱子关闭，剩余物品数量: {remainItems.Count}, 开始丢出至地上腾空箱子");
+                foreach (var item in remainItems)
+                {
+                    // Debug.Log($"丢出剩余物品: {item.DisplayName}");
+                    item.Drop(mainTrans.position, createRigidbody: true, Vector3.forward, 360f);
+                }
+                Debug.Log($"丢出剩余物品完毕");
+            }
 
             // 标记状态
             IsBoxOpen = false;

@@ -16,6 +16,7 @@
 ➤ 支持单独调整敌人战利品箱子搜索半径（默认10m）
 ➤ 支持单独调整非敌人战利品箱子的容器搜索半径（默认0.3m，官方设定值）
 ➤ 支持单独调整地面散落物搜索半径（默认0.3m，官方设定值，不建议调整）
+➤ 增加了实验性功能开关：是否在脚下生成临时垃圾堆盒子(谨慎开启!!!启用后右侧剩余物大于15个触发，会在脚下生成一个临时战利品盒子)
 
 [h2]配置已支持实时修改！[/h2]
 订阅mod [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3590674339]ModConfig[/url]并启用，加载存档后，即可在设置中修改配置并实时生效！
@@ -35,7 +36,7 @@
 [*] 2025-11-07 支持调整敌人战利品箱子搜索半径，默认为10m, 并优化了极高压下的性能表现，以及支持了自动卸载子弹。
 [*] 2025-11-08 支持了游戏内设置页面实时修改配置，支持调整地上散落物搜索半径，触发搜索时自动排序
 [*] 2025-11-09 加更：支持自动拆出插槽内物品（针对武器等带插槽物品）（需要在配置中开启，默认关闭）
-[*] 2025-11-10 加更：支持搜索非战利品箱子（需要在配置中开启，默认关闭）
+[*] 2025-11-10 加更：支持搜索非战利品箱子（需要在配置中开启，默认关闭）增加了实验性功能开关：是否在脚下生成临时垃圾堆
 [/list]
 
 [h3]更新计划[/h3]
@@ -57,6 +58,7 @@ Customizable features:
 ➤ Adjustable enemy loot radius (default: 10m)
 ➤ Adjustable non-enemy container radius (default: 0.3m)
 ➤ Adjustable ground item radius (default: 0.3m - not recommended)
+➤ Added experimental feature toggle: Spawn temporary loot container at your feet when remaining items > 15 (Use with extreme caution!!!)
 [h2]Real-Time Configuration![/h2]
 Subscribe to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3590674339]ModConfig[/url] → enable → edit settings in-game with instant effect!
 Best paired with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3597089297]Detailed Weight Status[/url] ^_^

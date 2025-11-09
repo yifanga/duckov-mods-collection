@@ -20,7 +20,11 @@ namespace LootNearbyItem
         private const bool DEFAULT_AUTO_UNPLUG_SLOTS = false;
         private const bool DEFAULT_SEARCH_OTHER_CONTAINERS = false;
         private const float DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS = 0.3f;
+
         // private const bool DEFAULT_SEARCH_OTHER_CONTAINERS_WITH_REQUIRE = false;
+
+        private const bool DEFAULT_GENERATOR_TEMP_TRASH_CAN = false;
+
         // 设置配置文件夹路径
         private static string ModFolderPath = Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME);
         private static string ConfigFilePath = Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME, MOD_NAME);
@@ -57,6 +61,8 @@ namespace LootNearbyItem
 
             // public bool searchOtherContainersWithRequire = DEFAULT_SEARCH_OTHER_CONTAINERS_WITH_REQUIRE;
 
+            public bool generatorTempTrashCan = DEFAULT_GENERATOR_TEMP_TRASH_CAN;
+
             [NonSerialized]
             public KeyCode searchKeyCode = DEFAULT_SEARCH_KEY_CODE;
         }
@@ -74,6 +80,7 @@ namespace LootNearbyItem
                 searchOtherContainers = DEFAULT_SEARCH_OTHER_CONTAINERS,
                 searchOtherContainersRadius = DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS,
                 // searchOtherContainersWithRequire = DEFAULT_SEARCH_OTHER_CONTAINERS_WITH_REQUIRE
+                generatorTempTrashCan = DEFAULT_GENERATOR_TEMP_TRASH_CAN
             };
         }
 
@@ -204,7 +211,8 @@ namespace LootNearbyItem
                               "// searchPickupRadius: 0.3 - 搜索附近物品的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n" +
                               "// autoUnplugSlots: false - 搜索是否自动拆出配件槽内物品（全局生效）\n" +
                               "// searchOtherContainers: false - 是否搜索非击杀掉落的所有容器\n" +
-                              "// searchOtherContainersRadius: 0.3 - 搜索非击杀掉落容器的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n\n" +
+                              "// searchOtherContainersRadius: 0.3 - 搜索非击杀掉落容器的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n" +
+                              $"// generatorTempTrashCan: false - 是否在脚下生成临时垃圾堆盒子(实验性,大于{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}个触发)\n\n" +
                               //   "// searchOtherContainersWithRequire: false - 是否忽略非击杀掉落容器搜索条件(钥匙铲子等)\n\n" +
                               JsonUtility.ToJson(configData, true); // 使用美化格式
 
@@ -361,6 +369,21 @@ namespace LootNearbyItem
         //     _current.searchOtherContainersWithRequire = enableSearch;
         // }
 
+        public static void SetGeneratorTempTrashCan(bool enable)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            _current.generatorTempTrashCan = enable; 
+        }
+
+        public static bool GetGeneratorTempTrashCan()
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+            return _current.generatorTempTrashCan;
+        }
+
         public static void OnModConfigMenuActivated(ModInfo info, Duckov.Modding.ModBehaviour behaviour)
         {
             if (info.name == ModConfigAPI.ModConfigName)
@@ -402,6 +425,12 @@ namespace LootNearbyItem
             //     GetAutoUnplugSlots()
             // );
 
+            ModConfigAPI.SafeAddBoolDropdownList(
+                MOD_NAME,
+                "GenerateTempTrashCanSetting",
+                LocalizationUtil.GenerateTempTrashCanSetting,
+                GetGeneratorTempTrashCan()
+            );
 
             ModConfigAPI.SafeAddInputWithSlider(
                 MOD_NAME,
@@ -480,6 +509,7 @@ namespace LootNearbyItem
             SetSearchPickupRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchPickupRadiusSetting", DEFAULT_SEARCH_PICKUP_RADIUS));
             SetSearchOtherContainers(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "SearchOtherContainersSetting", DEFAULT_SEARCH_OTHER_CONTAINERS));
             SetSearchOtherContainersRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchOtherContainersRadiusSetting", DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS));
+            SetGeneratorTempTrashCan(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "GenerateTempTrashCanSetting", DEFAULT_GENERATOR_TEMP_TRASH_CAN));
         }
 
 
