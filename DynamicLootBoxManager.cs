@@ -71,15 +71,21 @@ namespace LootNearbyItem
                 Destroy(currentHiddenLootBox.gameObject);
             }
 
-            // 创建新箱子对象
-            GameObject lootBoxObject = new GameObject("DynamicHiddenLootBox");
-            lootBoxObject.SetActive(false);
+            // 使用预制体创建lootbox
+            currentHiddenLootBox = Instantiate(InteractableLootbox.Prefab);
+            currentHiddenLootBox.transform.SetParent(this.transform);
 
-            // 附加到当前单例上
-            lootBoxObject.transform.SetParent(this.transform);
-
-            // 添加必要组件
-            currentHiddenLootBox = lootBoxObject.AddComponent<InteractableLootbox>();
+            if (currentHiddenLootBox == null)
+            {
+                // 创建新箱子对象
+                GameObject lootBoxObject = new GameObject("DynamicHiddenLootBox");
+                lootBoxObject.SetActive(false);
+                // 附加到当前单例上
+                lootBoxObject.transform.SetParent(this.transform);
+                // 添加必要组件
+                currentHiddenLootBox = lootBoxObject.AddComponent<InteractableLootbox>();
+            }
+            
 
             //设置名称
             LootboxDisplayNameKeyField?.SetValue(currentHiddenLootBox, LocalizationUtil.ScatteredObjectsText);
@@ -187,7 +193,11 @@ namespace LootNearbyItem
             // 必要的前置清理
             item.AgentUtilities.ReleaseActiveAgent();
             item.Detach();
-            item.Inspected = true;
+            // 如果不保留搜索时间，则将物品全部设置为已搜索过
+            if (!ModConfigManager.GetSearchTimeKeep())
+            {
+                item.Inspected = true;
+            }
             // 添加到库存
             if (!currentHiddenLootBox.Inventory.AddAndMerge(item))
             {
@@ -217,7 +227,14 @@ namespace LootNearbyItem
             currentHiddenLootBox.gameObject.SetActive(true);
 
             // 触发战利品界面
-            CallStartLootMethod();
+            CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
+            if (main == null)
+            {
+                Debug.Log("main is null");
+                return;
+            }
+            // 打开箱子
+            main.Interact(currentHiddenLootBox);
 
             // 标记状态
             IsBoxOpen = true;
@@ -229,35 +246,13 @@ namespace LootNearbyItem
             StartCoroutine(MonitorBoxClose());
         }
 
-        private void CallStartLootMethod()
-        {
-            try
-            {
-                // 使用反射获取 StartLoot 方法
-                var startLootMethod = typeof(InteractableLootbox).GetMethod(
-                    "StartLoot",
-                    BindingFlags.NonPublic | BindingFlags.Instance
-                );
-
-                if (startLootMethod != null)
-                {
-                    // 调用 StartLoot 方法
-                    startLootMethod.Invoke(currentHiddenLootBox, null);
-                }
-                else
-                {
-                    Debug.LogError("无法找到 StartLoot 方法");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"调用 StartLoot 失败: {ex.Message}");
-            }
-        }
-
         // 监听箱子关闭
         private System.Collections.IEnumerator MonitorBoxClose()
         {
+            // 等待箱子开启(如果已开启，此步会直接跳过)
+            yield return new WaitWhile(() =>
+                (LootView.Instance == null || !LootView.Instance.open) &&
+                currentHiddenLootBox != null);
             // 等待箱子关闭
             yield return new WaitWhile(() =>
                 LootView.Instance != null && LootView.Instance.open &&

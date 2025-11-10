@@ -110,6 +110,22 @@ namespace LootNearbyItem
             }
         );
 
+        public static string SearchTimeKeepSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "是否保留搜索时间",
+                ChineseTraditional = "是否保留搜索時間",
+                Japanese = "搜索時間を保持しますか",
+                English = "Keep search time?",
+                Korean = "검색 시간을 유지합니까?",
+                French = "Conserver le temps de recherche?",
+                German = "Suchzeit behalten?",
+                Russian = "Сохранять время поиска?",
+                Spanish = "¿Mantener tiempo de búsqueda?"
+            }
+        );
+
         public static string SearchContainersSetting => GetTranslation(
             CurrentLanguage,
             new TranslationSet

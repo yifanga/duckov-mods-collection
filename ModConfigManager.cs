@@ -13,6 +13,7 @@ namespace LootNearbyItem
 
         private const string MOD_NAME = "LootNearByItem";
         private const string DEFAULT_SEARCH_KEY = "H";
+        private const bool DEFAULT_SEARCH_TIME_KEEP = false;
         private const bool DEFAULT_SEARCH_CONTAINERS = false;
         private const float DEFAULT_SEARCH_CONTAINERS_RADIUS = 10f;
         private const float DEFAULT_SEARCH_PICKUP_RADIUS = 0.3f;
@@ -52,6 +53,7 @@ namespace LootNearbyItem
         public class ConfigData
         {
             public string searchKey = DEFAULT_SEARCH_KEY;
+            public bool searchTimeKeep = DEFAULT_SEARCH_TIME_KEEP;
             public bool searchContainers = DEFAULT_SEARCH_CONTAINERS;
             public float searchContainersRadius = DEFAULT_SEARCH_CONTAINERS_RADIUS;
             public float searchPickupRadius = DEFAULT_SEARCH_PICKUP_RADIUS;
@@ -72,6 +74,7 @@ namespace LootNearbyItem
             return new ConfigData
             {
                 searchKey = DEFAULT_SEARCH_KEY,
+                searchTimeKeep = DEFAULT_SEARCH_TIME_KEEP,
                 searchContainers = DEFAULT_SEARCH_CONTAINERS,
                 searchContainersRadius = DEFAULT_SEARCH_CONTAINERS_RADIUS,
                 searchPickupRadius = DEFAULT_SEARCH_PICKUP_RADIUS,
@@ -206,6 +209,7 @@ namespace LootNearbyItem
                               "//  鼠标键: \"Mouse0\"(左键), \"Mouse1\"(右键), \"Mouse2\"(中键), \"Mouse3\"到\"Mouse6\"(侧键)\n" +
                               "//  特殊键: \"Space\", \"Tab\", \"Return\", \"Escape\"\n" +
                               "//  方向键: \"UpArrow\", \"DownArrow\", \"LeftArrow\", \"RightArrow\"\n" +
+                              "// searchTimeKeep: true/false - 是否保留搜索时间（默认关闭）\n" +
                               "// searchContainers: true/false - 是否搜索附近战利品容器（击杀掉落）\n" +
                               "// searchContainersRadius: 10.0 - 搜索附近战利品容器的距离半径(0.3m-20m)游戏默认0.3m,这里默认为10米\n" +
                               "// searchPickupRadius: 0.3 - 搜索附近物品的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n" +
@@ -257,6 +261,22 @@ namespace LootNearbyItem
             }
             _current.searchKey = keyCodeStr;
             _current.searchKeyCode = keyCode;
+        }
+
+        public static bool GetSearchTimeKeep()
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            return _current.searchTimeKeep;
+        }
+
+        public static void SetSearchTimeKeep(bool enable)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            _current.searchTimeKeep = enable;
         }
 
         public static bool GetAutoUnplugSlots()
@@ -374,7 +394,7 @@ namespace LootNearbyItem
             if (_current == null)
                 throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
 
-            _current.generatorTempTrashCan = enable; 
+            _current.generatorTempTrashCan = enable;
         }
 
         public static bool GetGeneratorTempTrashCan()
@@ -473,6 +493,14 @@ namespace LootNearbyItem
                 GetAutoUnplugSlots()
             );
 
+            // 是否保留搜索时间
+            ModConfigAPI.SafeAddBoolDropdownList(
+                MOD_NAME,
+                "SearchTimeKeepSetting",
+                LocalizationUtil.SearchTimeKeepSetting,
+                GetSearchTimeKeep()
+            );
+
             ModConfigAPI.SafeAddDropdownList(
                 MOD_NAME,
                 "SearchHotKeySetting",
@@ -503,6 +531,7 @@ namespace LootNearbyItem
         {
             // 使用新的 LoadConfig 方法读取所有配置
             SetSearchKeyCode(ModConfigAPI.SafeLoad<string>(MOD_NAME, "SearchHotKeySetting", DEFAULT_SEARCH_KEY));
+            SetSearchTimeKeep(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "SearchTimeKeepSetting", DEFAULT_SEARCH_TIME_KEEP));
             SetAutoUnplugSlots(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "AutoUnplugSlots", DEFAULT_AUTO_UNPLUG_SLOTS));
             SetSearchContainers(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "SearchContainersSetting", DEFAULT_SEARCH_CONTAINERS));
             SetSearchContainersRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchContainersRadiusSetting", DEFAULT_SEARCH_CONTAINERS_RADIUS));
