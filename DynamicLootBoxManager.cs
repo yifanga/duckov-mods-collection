@@ -298,6 +298,8 @@ namespace LootNearbyItem
 
                 InteractableLootbox tmpBox = InteractableLootbox.CreateFromItem(agentItem, mainTrans.position, mainTrans.rotation, moveToMainScene: true, GameplayDataSettings.Prefabs.LootBoxPrefab, filterDontDropOnDead: false);
                 LootboxDisplayNameKeyField.SetValue(tmpBox, LocalizationUtil.TempTrashCanText);
+                // 放大1.5倍做区分
+                tmpBox.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
                 // 清理临时构造的item
                 ItemInventoryProperty.SetValue(agentItem, null);
                 Destroy(itemObject);

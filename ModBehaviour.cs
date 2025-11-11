@@ -28,6 +28,9 @@ namespace LootNearbyItem
             // 监听配置，并随着配置更改随时保存
             ModManager.OnModActivated += ModConfigManager.OnModConfigMenuActivated;
 
+            // 随着后续mod启动，尝试查找harmony并patch
+            ModManager.OnModActivated += DynamicHarmonyPatcher.OnModConfigMenuActivated;
+
             // 立即检查一次，防止 ModConfig 已经加载但事件错过了
             if (ModConfigAPI.IsAvailable())
             {
@@ -35,6 +38,8 @@ namespace LootNearbyItem
                 ModConfigManager.SetupModConfig();
                 ModConfigManager.LoadConfigFromModConfig();
             }
+            // 立即patch一次，防止已加载
+            DynamicHarmonyPatcher.Initialize();
         }
 
 
@@ -42,7 +47,11 @@ namespace LootNearbyItem
         {
             // 清理监听配置
             ModManager.OnModActivated += ModConfigManager.OnModConfigMenuActivated;
+            ModManager.OnModActivated -= DynamicHarmonyPatcher.OnModConfigMenuActivated;
             ModConfigAPI.SafeRemoveOnOptionsChangedDelegate(ModConfigManager.OnModConfigOptionsChanged);
+
+            // 清理patch
+            DynamicHarmonyPatcher.RemovePatch();
         }
 
         void Update()
