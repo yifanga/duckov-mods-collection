@@ -26,6 +26,7 @@
 ➤ 支持单独调整非敌人战利品箱子的容器搜索半径（默认0.3m，官方设定值）
 ➤ 支持单独调整地面散落物搜索半径（默认0.3m，官方设定值，不建议调整）
 ➤ 增加了实验性功能开关：是否在脚下生成临时垃圾堆盒子(谨慎开启!!!启用后右侧剩余物大于15时触发，理论上可降低非常极端情况的负载)
+➤ 增加了全部拾取按钮，订阅[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3589088839]HarmonyLib[/url]后生效，无加载顺序依赖，不订阅没有其他影响，只是少个全部拾取按钮
 
 [h2]配置已支持实时修改生效！[/h2]
 订阅mod [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3590674339]ModConfig[/url]并启用，加载存档后，即可在设置中修改配置并实时生效！
@@ -49,6 +50,7 @@
 [*] 2025-11-09 加更：支持自动拆出插槽内物品（针对武器等带插槽物品）（需要在配置中开启，默认关闭）
 [*] 2025-11-10 加更：支持搜索非战利品箱子（需要在配置中开启，默认关闭）增加了实验性功能开关：是否在脚下生成临时垃圾堆
 [*] 2025-11-11 加更：支持保留搜索过程和时间（需要在配置中开启，默认关闭）
+[*] 2025-11-12 加更：新增全部拾取按钮（需单独订阅HarmonyLib，非必须，无顺序要求）
 [/list]
 
 [h3]更新计划[/h3]
@@ -76,6 +78,7 @@ Customizable features:
 ➤ Adjust non-enemy container radius (default: 0.3m)
 ➤ Adjust ground item radius (default: 0.3m - not recommended)
 ➤ Experimental: Spawn temporary container at feet when >15 items remain (Use with extreme caution!!!)
+➤ Added "Pick All" button (requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3589088839]HarmonyLib[/url] subscription - no load order dependency. No impact if not subscribed, only missing the button)
 [h2]Real-Time Configuration![/h2]
 Subscribe to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3590674339]ModConfig[/url] → enable → edit in-game!
 Best paired with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3597089297]Detailed Weight Status[/url] ^_^
