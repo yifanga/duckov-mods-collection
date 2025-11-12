@@ -185,7 +185,7 @@ namespace DuckovBetterRealDog
             var boxes = MultiSceneCore.Instance.GetComponentsInChildren<InteractableLootbox>();
             foreach (var box in boxes)
             {
-                if (!allBoxes.Contains(box) && 
+                if (box != null && !allBoxes.Contains(box) && 
                     !carriedBoxes.Contains(box) && 
                     !discardedBoxes.Contains(box))
                 {
@@ -278,12 +278,16 @@ namespace DuckovBetterRealDog
                     
                     // Add to interaction group
                     var interactables = Traverse.Create(box).Field("otherInterablesInGroup").GetValue<List<InteractableBase>>();
-                    interactables.Add(dropComponent);
-                    box.GetInteractableList();
+                    if (interactables != null)
+                    {
+                        interactables.Add(dropComponent);
+                        box.GetInteractableList();
+                    }
                 }
                 else
                 {
                     dropComponent.gameObject.SetActive(true);
+                    dropComponent.onDrop += OnBoxDropped; // Ensure event is subscribed
                 }
                 
                 // Disable physics and hide carry interaction
@@ -292,6 +296,7 @@ namespace DuckovBetterRealDog
                 {
                     rb.isKinematic = true;
                     rb.interpolation = RigidbodyInterpolation.None;
+                    rb.useGravity = false;
                 }
                 
                 var carryComponent = box.GetComponentInChildren<InteractableCarriable>();
@@ -340,9 +345,10 @@ namespace DuckovBetterRealDog
             Quaternion rotation = Quaternion.AngleAxis(360f / carriedBoxes.Count, rotateAxis);
             
             // Drop each box
-            for (int i = carriedBoxes.Count - 1; i >= 0; i--)
+            var boxesToDrop = new List<InteractableLootbox>(carriedBoxes);
+            for (int i = boxesToDrop.Count - 1; i >= 0; i--)
             {
-                var box = carriedBoxes[i];
+                var box = boxesToDrop[i];
                 if (box != null)
                 {
                     Vector3 newDir = rotation * direction;
@@ -357,7 +363,7 @@ namespace DuckovBetterRealDog
             }
             
             // Update collections
-            discardedBoxes.AddRange(carriedBoxes);
+            discardedBoxes.AddRange(boxesToDrop);
             carriedBoxes.Clear();
             
             // Reset state
@@ -368,7 +374,7 @@ namespace DuckovBetterRealDog
         {
             if (dropComponent == null) return;
             
-            var box = dropComponent.transform.parent.GetComponent<InteractableLootbox>();
+            var box = dropComponent.transform.parent?.GetComponent<InteractableLootbox>();
             if (box != null)
             {
                 StartCoroutine(DropBox(dropComponent, box, player.transform.forward));
@@ -380,34 +386,68 @@ namespace DuckovBetterRealDog
 
         private IEnumerator DropBox(InteractableOnlyDrop dropComponent, InteractableLootbox box, Vector3 direction)
         {
+            if (dropComponent == null || box == null) yield break;
+            
             // Hide drop component
             dropComponent.gameObject.SetActive(false);
             
             // Move to active scene
-            MultiSceneCore.MoveToActiveWithScene(box.gameObject, SceneManager.GetActiveScene().buildIndex);
-            
-            // Enable physics
-            var rb = box.GetComponent<Rigidbody>();
-            if (rb != null)
+            try
             {
-                rb.isKinematic = false;
-                rb.interpolation = RigidbodyInterpolation.Interpolate;
-                rb.velocity = direction * DROP_FORCE + Vector3.up * DROP_UPWARD_FORCE;
+                MultiSceneCore.MoveToActiveWithScene(box.gameObject, SceneManager.GetActiveScene().buildIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to move box to active scene: {ex.Message}");
             }
             
-            // Re-enable carry interaction
+            // Re-enable carry interaction first
             var carryComponent = box.GetComponentInChildren<InteractableCarriable>(true);
             if (carryComponent != null)
             {
                 carryComponent.gameObject.SetActive(true);
             }
             
-            // Wait and disable physics again
-            yield return new WaitForSeconds(3f);
-            
+            // Enable physics properly
+            var rb = box.GetComponent<Rigidbody>();
             if (rb != null)
             {
+                // Reset transform before enabling physics
+                box.transform.SetParent(null);
+                
+                // Configure rigidbody for proper physics
+                rb.isKinematic = false;
+                rb.useGravity = true;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                
+                // Apply velocity
+                rb.velocity = direction.normalized * DROP_FORCE + Vector3.up * DROP_UPWARD_FORCE;
+                
+                // Reset angular velocity
+                rb.angularVelocity = Vector3.zero;
+            }
+
+            // Restore collider settings
+            if (box.interactCollider != null)
+            {
+                box.interactCollider.isTrigger = false;
+            }
+            yield return new WaitForSeconds(0.1f);
+            if (rb != null && rb.gameObject.activeInHierarchy)
+            {
+                rb.velocity *= 0.8f; // 减速比例可以增大
+            }
+            // Final cleanup after delay
+            yield return new WaitForSeconds(2.9f);
+            
+            if (rb != null && rb.gameObject.activeInHierarchy)
+            {
+                // Final physics stabilization
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
                 rb.isKinematic = true;
+                rb.useGravity = false;
                 rb.interpolation = RigidbodyInterpolation.None;
             }
         }
@@ -446,13 +486,16 @@ namespace DuckovBetterRealDog
 
         protected override void OnInteractFinished()
         {
-            if (!interactCharacter) return;
+            if (interactCharacter == null) return;
             onDrop?.Invoke(this);
         }
 
         public void ForceDrop(Vector3 direction)
         {
-            GameObject.Destroy(interactCollider);
+            if (interactCollider != null)
+            {
+                GameObject.Destroy(interactCollider);
+            }
             StartCoroutine(Drop(direction));
         }
 
