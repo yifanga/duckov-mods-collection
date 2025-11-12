@@ -1,0 +1,6 @@
+bin
+.vscode
+obj
+*.sln
+*.psd
+ref
