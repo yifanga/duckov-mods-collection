@@ -288,7 +288,7 @@ namespace LootNearbyItem
             }
             // 实验性功能，支持临时生成垃圾堆
             if (null != currentHiddenLootBox && ModConfigManager.GetGeneratorTempTrashCan()
-                    && remainItems.Count > GENERATOR_TEMP_TRASH_CAN_THRESHOLD)
+                    && remainItems.Count > ModConfigManager.GetGeneratorTempTrashCanThreshold())
             {
                 Debug.Log($"箱子关闭，剩余物品数量: {remainItems.Count}, 物品较多开始生成盒子");
                 // 临时构造item用于初始化lootbox

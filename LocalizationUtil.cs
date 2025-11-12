@@ -239,15 +239,30 @@ namespace LootNearbyItem
             CurrentLanguage,
             new TranslationSet
             {
-                ChineseSimplified = $"是否在脚下生成临时垃圾堆盒子(实验性,大于{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}个触发)",
-                ChineseTraditional = $"是否在腳下生成臨時垃圾堆盒子(實驗性,大於{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}個觸發)",
-                Japanese = $"足元に一時ゴミ箱生成? (実験的, {DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}個以上)",
-                English = $"Generate temp trash can? (Exp, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} items)",
-                Korean = $"임시 쓰레기통 생성? (실험, {DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}개 이상)",
-                French = $"Générer poubelle temp? (Exp, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} objets)",
-                German = $"Temp-Mülleimer generieren? (Exp, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} Gegenstände)",
-                Russian = $"Создать временную корзину? (Эксп, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} предметов)",
-                Spanish = $"¿Generar contenedor temp? (Exp, >{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD} objetos)"
+                ChineseSimplified = "是否在脚下生成临时垃圾堆盒子(物品大于指定个数触发)",
+                ChineseTraditional = "是否在腳下生成臨時垃圾堆盒子(物品大於指定個數觸發)",
+                Japanese = "足元に一時ゴミ箱を生成しますか?(アイテムが指定数以上で発動)",
+                English = "Generate temp trash can at feet? (Triggers when items > threshold)",
+                Korean = "발 아래에 임시 쓰레기통 생성? (아이템이 임계값 초과 시 발동)",
+                French = "Générer poubelle temp aux pieds? (Déclenche si objets > seuil)",
+                German = "Temp-Mülleimer am Fuß generieren? (Löst aus bei Gegenständen > Schwellenwert)",
+                Russian = "Создать временную корзину у ног? (Срабатывает при предметах > порога)",
+                Spanish = "¿Generar contenedor temp a los pies? (Se activa si objetos > umbral)"
+            }
+        );
+        public static string GenerateTempTrashCanThresholdSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "生成垃圾堆的物品个数阈值(0-30,默认10)",
+                ChineseTraditional = "生成垃圾堆的物品個數閾值(0-30,預設10)",
+                Japanese = "ゴミ箱生成アイテム数閾値(0-30,デフォルト10)",
+                English = "Trash can item threshold (0-30, default 10)",
+                Korean = "쓰레기통 아이템 임계값 (0-30, 기본값 10)",
+                French = "Seuil d'objets pour poubelle (0-30, défaut 10)",
+                German = "Schwellenwert für Mülleimer (0-30, Standard 10)",
+                Russian = "Порог предметов для корзины (0-30, по умолчанию 10)",
+                Spanish = "Umbral de objetos para contenedor (0-30, predeterminado 10)"
             }
         );
 

@@ -26,6 +26,8 @@ namespace LootNearbyItem
 
         private const bool DEFAULT_GENERATOR_TEMP_TRASH_CAN = false;
 
+        private const int DEFAULT_GENERATOR_TEMP_TRASH_CAN_THRESHOlD = 10;
+
         // 设置配置文件夹路径
         private static string ModFolderPath = Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME);
         private static string ConfigFilePath = Path.Combine(ModManager.DefaultModFolderPath, MOD_NAME, MOD_NAME);
@@ -65,6 +67,8 @@ namespace LootNearbyItem
 
             public bool generatorTempTrashCan = DEFAULT_GENERATOR_TEMP_TRASH_CAN;
 
+            public int generatorTempTrashCanThreshold = DEFAULT_GENERATOR_TEMP_TRASH_CAN_THRESHOlD;
+
             [NonSerialized]
             public KeyCode searchKeyCode = DEFAULT_SEARCH_KEY_CODE;
         }
@@ -83,7 +87,8 @@ namespace LootNearbyItem
                 searchOtherContainers = DEFAULT_SEARCH_OTHER_CONTAINERS,
                 searchOtherContainersRadius = DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS,
                 // searchOtherContainersWithRequire = DEFAULT_SEARCH_OTHER_CONTAINERS_WITH_REQUIRE
-                generatorTempTrashCan = DEFAULT_GENERATOR_TEMP_TRASH_CAN
+                generatorTempTrashCan = DEFAULT_GENERATOR_TEMP_TRASH_CAN,
+                generatorTempTrashCanThreshold = DEFAULT_GENERATOR_TEMP_TRASH_CAN_THRESHOlD
             };
         }
 
@@ -216,7 +221,8 @@ namespace LootNearbyItem
                               "// autoUnplugSlots: false - 搜索是否自动拆出配件槽内物品（全局生效）\n" +
                               "// searchOtherContainers: false - 是否搜索非击杀掉落的所有容器\n" +
                               "// searchOtherContainersRadius: 0.3 - 搜索非击杀掉落容器的距离半径(0.3m-20m)游戏默认0.3m,建议不要修改\n" +
-                              $"// generatorTempTrashCan: false - 是否在脚下生成临时垃圾堆盒子(实验性,大于{DynamicLootBoxManager.GENERATOR_TEMP_TRASH_CAN_THRESHOLD}个触发)\n\n" +
+                              "// generatorTempTrashCan: false - 是否在脚下生成临时垃圾堆盒子(大于指定数量触发)\n" +
+                              "// generatorTempTrashCanThreshold: 10 - 生成垃圾堆的阈值，默认为10个\n\n"+
                               //   "// searchOtherContainersWithRequire: false - 是否忽略非击杀掉落容器搜索条件(钥匙铲子等)\n\n" +
                               JsonUtility.ToJson(configData, true); // 使用美化格式
 
@@ -404,6 +410,24 @@ namespace LootNearbyItem
             return _current.generatorTempTrashCan;
         }
 
+        public static void SetGeneratorTempTrashCanThreshold(int threshold)
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+            
+            _current.generatorTempTrashCanThreshold = Mathf.Clamp(threshold, 0, 30);
+        }
+
+        public static int GetGeneratorTempTrashCanThreshold()
+        {
+            if (_current == null)
+                throw new InvalidOperationException("ModConfig not initialized. Call Init() first.");
+
+            int clampVal = Mathf.Clamp(_current.generatorTempTrashCanThreshold, 0, 30);
+            _current.generatorTempTrashCanThreshold = clampVal;
+            return clampVal;
+        }
+
         public static void OnModConfigMenuActivated(ModInfo info, Duckov.Modding.ModBehaviour behaviour)
         {
             if (info.name == ModConfigAPI.ModConfigName)
@@ -444,6 +468,15 @@ namespace LootNearbyItem
             //     LocalizationUtil.IgnoreOtherContainersRequiredSetting,
             //     GetAutoUnplugSlots()
             // );
+
+            ModConfigAPI.SafeAddInputWithSlider(
+                MOD_NAME,
+                "GenerateTempTrashCanThresholdSetting",
+                LocalizationUtil.GenerateTempTrashCanThresholdSetting,
+                typeof(int),
+                GetGeneratorTempTrashCanThreshold(),
+                new Vector2(0, 30)
+            );
 
             ModConfigAPI.SafeAddBoolDropdownList(
                 MOD_NAME,
@@ -539,6 +572,7 @@ namespace LootNearbyItem
             SetSearchOtherContainers(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "SearchOtherContainersSetting", DEFAULT_SEARCH_OTHER_CONTAINERS));
             SetSearchOtherContainersRadius(ModConfigAPI.SafeLoad<float>(MOD_NAME, "SearchOtherContainersRadiusSetting", DEFAULT_SEARCH_OTHER_CONTAINERS_RADIUS));
             SetGeneratorTempTrashCan(ModConfigAPI.SafeLoad<bool>(MOD_NAME, "GenerateTempTrashCanSetting", DEFAULT_GENERATOR_TEMP_TRASH_CAN));
+            SetGeneratorTempTrashCanThreshold(ModConfigAPI.SafeLoad<int>(MOD_NAME, "GenerateTempTrashCanThresholdSetting", DEFAULT_GENERATOR_TEMP_TRASH_CAN_THRESHOlD));
         }
 
 

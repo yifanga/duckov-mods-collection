@@ -8,6 +8,9 @@
 
 ⭐开挂模式∶所有选项开启和拉满，一键扫荡，进图如秋风扫落叶，走过的地方寸草不留
 
+功能介绍视频链接 【鸭科夫】不容错过的一键搜索mod-哔哩哔哩
+[url=https://www.bilibili.com/video/BV1QWk1BQE2w]https://www.bilibili.com/video/BV1QWk1BQE2w[/url]
+
 [h2]理包时想要的地面物品找不到怎么办？[/h2]
 
 不要急！订阅本MOD后，按下 [b]H键[/b] 即可像搜索箱子一样搜索地面物品，快速定位目标物品！
@@ -25,7 +28,7 @@
 ➤ 支持单独调整敌人战利品箱子搜索半径（默认10m）
 ➤ 支持单独调整非敌人战利品箱子的容器搜索半径（默认0.3m，官方设定值）
 ➤ 支持单独调整地面散落物搜索半径（默认0.3m，官方设定值，不建议调整）
-➤ 增加了实验性功能开关：是否在脚下生成临时垃圾堆盒子(谨慎开启!!!启用后右侧剩余物大于15时触发，理论上可降低非常极端情况的负载)
+➤ 支持自定义是否在脚下生成临时垃圾堆盒子(启用后右侧物品大于自定义的阈值时触发，默认10个，可降低极端情况负载)
 ➤ 增加了全部拾取按钮，订阅[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3589088839]HarmonyLib[/url]后生效，无加载顺序依赖，不订阅没有其他影响，只是少个全部拾取按钮
 
 [h2]配置已支持实时修改生效！[/h2]
@@ -77,7 +80,7 @@ Customizable features:
 ➤ Adjust enemy loot radius (default: 10m)
 ➤ Adjust non-enemy container radius (default: 0.3m)
 ➤ Adjust ground item radius (default: 0.3m - not recommended)
-➤ Experimental: Spawn temporary container at feet when >15 items remain (Use with extreme caution!!!)
+➤ Customizable trash pile spawning threshold (default: 10 items) to reduce extreme case load
 ➤ Added "Pick All" button (requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3589088839]HarmonyLib[/url] subscription - no load order dependency. No impact if not subscribed, only missing the button)
 [h2]Real-Time Configuration![/h2]
 Subscribe to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3590674339]ModConfig[/url] → enable → edit in-game!
