@@ -3,551 +3,465 @@ using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UIElements;
-using static UnityEngine.Rendering.DebugUI.Table;
 
 namespace DuckovBetterRealDog
 {
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
-        CharacterMainControl petControl;
-        AICharacterController petAIController;
-        PetAI petAI;
-        CharacterMainControl characterControl;
+        #region Fields and Properties
+        
+        // Components
+        private CharacterMainControl player;
+        private CharacterMainControl pet;
+        private PetAI petAI;
+        private Transform dogBoxParent;
+        
+        // Box collections
+        private readonly List<InteractableLootbox> allBoxes = new();
+        private readonly List<InteractableLootbox> carriedBoxes = new();
+        private readonly List<InteractableLootbox> discardedBoxes = new();
+        
+        // State management
+        private bool isPickMode = true;
+        private bool isMovingToBox = false;
+        private bool isHoldingL = false;
+        private bool isHoldingV = false;
+        private float holdTimerL = 0f;
+        private float holdTimerV = 0f;
+        private const float HOLD_THRESHOLD_L = 1f;
+        private const float HOLD_THRESHOLD_V = 2f;
+        
+        // Current target
+        private InteractableLootbox targetBox;
+        
+        // Constants
+        private const float PET_HEIGHT = 0.7f;
+        private const float BOX_HEIGHT = 0.5f;
+        private const float MOVE_TIMEOUT = 5f;
+        private const float DROP_FORCE = 5.5f;
+        private const float DROP_UPWARD_FORCE = 0.5f;
+        
+        #endregion
 
-        List<InteractableLootbox> allBox = new List<InteractableLootbox>();
-        List<InteractableLootbox> dogGetBox = new List<InteractableLootbox>();
-        List<InteractableLootbox> destoryBox = new List<InteractableLootbox>();
-        bool openPick = false;
+        #region Lifecycle Methods
 
-        Transform dogBoxParent;
-
-        void OnEnable()
+        private void OnEnable()
         {
-            LevelManager.OnAfterLevelInitialized += DogBInit;
-
+            LevelManager.OnAfterLevelInitialized += Initialize;
         }
 
-
-        void OnDisable()
+        private void OnDisable()
         {
-            LevelManager.OnAfterLevelInitialized -= DogBInit;
-
+            LevelManager.OnAfterLevelInitialized -= Initialize;
         }
 
-        void OnLongPressTriggered()
+        private void Initialize()
         {
-            if (openPick)//关闭
+            // Get references
+            player = LevelManager.Instance.MainCharacter;
+            pet = LevelManager.Instance.PetCharacter;
+            petAI = pet.GetComponentInChildren<PetAI>();
+            
+            // Setup container for carried boxes
+            dogBoxParent = pet.transform.Find("SxerDogBParent");
+            if (dogBoxParent == null)
             {
-                openPick = false;
-
-                petAI.standBy = false;
-
-                petControl.transform.position = characterControl.transform.position + characterControl.transform.forward.normalized * 1f;
-
-                
-                
-                characterControl.PopText("狗子歇歇吧～",5f);
-
+                var parentObj = new GameObject("SxerDogBParent");
+                parentObj.transform.SetParent(pet.transform);
+                parentObj.transform.localPosition = Vector3.zero;
+                dogBoxParent = parentObj.transform;
             }
-            else
-            {
-                openPick = true;
-                //petAI.standBy = true;
+            
+            // Clear collections
+            allBoxes.Clear();
+            carriedBoxes.Clear();
+            discardedBoxes.Clear();
+            
+            // Reset state
+            isPickMode = true;
+            isMovingToBox = false;
+            targetBox = null;
+        }
 
-                characterControl.PopText("上！", 5f);
+        private void Update()
+        {
+            HandleInput();
+            if (isPickMode)
+            {
+                FindAndCollectBoxes();
             }
         }
 
-        void ReSetFunc()
+        #endregion
+
+        #region Input Handling
+
+        private void HandleInput()
         {
-            characterControl.PopText("开始卸货", 5f);
-            //功能关闭
-            openPick = false;
-            //宠物位置和跟随重置
-            if(petAI == null)
-                petAI = LevelManager.Instance.PetCharacter.GetComponentInChildren<AICharacterController>().GetComponent<PetAI>();
-            petAI.standBy = false;
-
-            if (petControl == null)
-                petControl = LevelManager.Instance.PetCharacter;
-
-            if (characterControl == null)
-                characterControl = LevelManager.Instance.MainCharacter;
-
-            petControl.transform.position = characterControl.transform.position + characterControl.transform.forward.normalized * 1f;
-
-            //宠物携带包裹重置
-            if (dogGetBox.Count > 0)
-            {
-                Vector3 dir = petControl.transform.forward;
-                Vector3 rotateAxis = Vector3.up;
-                Quaternion rot = Quaternion.AngleAxis(360f / dogGetBox.Count, rotateAxis);
-
-                for (int i = 0; i < dogGetBox.Count; i++)
-                {
-                    InteractableLootbox tempLoot = dogGetBox[i];
-                    if (tempLoot != null)//避免被剔除造成影响
-                    {
-                        Vector3 newDir = rot * dir;
-                        dir = newDir;
-
-                        InteractableOnlyDrop oD = tempLoot.GetComponentInChildren<InteractableOnlyDrop>(true);
-                        if (oD != null)
-                        {
-                            StartCoroutine(Drop(oD, tempLoot, newDir));
-                        }
-                    }
-                }
-            }
-
-            //记录destory
-            List<InteractableLootbox> backDestory = new List<InteractableLootbox>();
-            backDestory.AddRange(destoryBox);
-            //清理缓存
-            DogBInit();
-            destoryBox.Clear();
-            destoryBox.AddRange(backDestory);
-
-            openPick = false;
-        }
-
-        // 长按所需时间（秒）
-        public float requiredHoldTime = 1f;
-        // 记录当前按住的时间
-        private float currentHoldTime = 0f;
-        // 是否正在按住按键
-        private bool isHolding = false;
-
-        private bool isLongHolding = false;
-        private float currentLongHoldTime = 0f;
-        void Update()
-        {
-            // 检测L键是否被按下
+            // Handle L key (toggle pick mode)
             if (Input.GetKeyDown(KeyCode.L))
             {
-                isHolding = true;
-                currentHoldTime = 0f; // 重置计时
-
+                isHoldingL = true;
+                holdTimerL = 0f;
             }
-
-            // 检测L键是否被按下
-            if (Input.GetKeyDown(KeyCode.V))
-            {
-                isLongHolding = true;
-                currentLongHoldTime = 0f;
-            }
-
-            // 当按键被按住时计时
-            if (isHolding && Input.GetKey(KeyCode.L))
-            {
-                currentHoldTime += Time.deltaTime;
-
-                // 当按住时间达到要求时触发事件
-                if (currentHoldTime >= requiredHoldTime)
-                {
-                    OnLongPressTriggered();
-                    isHolding = false; // 防止重复触发
-                }
-            }
-
-            // 当按键被按住时计时
-            if (isLongHolding && Input.GetKey(KeyCode.V))
-            {
-                currentLongHoldTime += Time.deltaTime;
-
-                // 当按住时间达到要求时触发事件
-                if (currentLongHoldTime >= 2f)
-                {
-                    ReSetFunc();
-                    isLongHolding = false; // 防止重复触发
-                }
-            }
-
-
-            // 当按键松开时重置状态
+            
             if (Input.GetKeyUp(KeyCode.L))
             {
-                isHolding = false;
-
+                isHoldingL = false;
+            }
+            
+            if (isHoldingL)
+            {
+                holdTimerL += Time.deltaTime;
+                if (holdTimerL >= HOLD_THRESHOLD_L)
+                {
+                    TogglePickMode();
+                    isHoldingL = false;
+                }
             }
 
+            // Handle V key (drop all boxes)
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                isHoldingV = true;
+                holdTimerV = 0f;
+            }
+            
             if (Input.GetKeyUp(KeyCode.V))
             {
- 
-                isLongHolding = false;
+                isHoldingV = false;
             }
-
-
-
-            RunDog();
-
-
-        }
-
-        void DogBInit()
-        {
-            petControl = LevelManager.Instance.PetCharacter;
-            characterControl = LevelManager.Instance.MainCharacter;
-            petAIController = petControl.GetComponentInChildren<AICharacterController>();
-            petAI = petAIController.GetComponent<PetAI>();
-
-            allBox.Clear();
-            dogGetBox.Clear();
-            destoryBox.Clear();
-            openPick = true;
-            getting = false;
-            waitDogMove = false;
-            tempLootBox = null;
-            IsInMove = false;
-
-            if (petControl.transform.Find("SxerDogBParent") != null)
-                dogBoxParent = petControl.transform.Find("SxerDogBParent");
-            else
+            
+            if (isHoldingV)
             {
-                GameObject tempObj = new GameObject("SxerDogBParent");
-                tempObj.transform.SetParent(petControl.transform);
-         
-                dogBoxParent = tempObj.transform;
-                dogBoxParent.transform.localPosition = Vector3.zero;
-            }
-            //if (petControl != null)
-            //    petControl.GetComponent<Collider>().enabled = false;
-
-        }
-
-
-        void RunDog()
-        {
-            if (openPick)
-            {
-                //获取场景所有盒子
-                GetAllBoxInScene();
-
-                //取盒子
-                GetOneBox();
-
-
-                //狗子位置
-                //if(!getting && !waitDogMove)
-                //{
-                //    petAI.standBy = false;
-
-                //    if(petControl!=null && characterControl != null)
-                //    {
-                //        if (petControl.GetComponent<Collider>().enabled)
-                //            petControl.GetComponent<Collider>().enabled = false;
-
-                //        if (Vector3.Distance(petControl.transform.position, characterControl.transform.position) > 15f)
-                //        {
-                //            petControl.transform.position = characterControl.transform.position;
-                //        }
-                //    }
-                //}
-
-            }
-        }
-
-
-
-       
-
-        private void GetAllBoxInScene()
-        {
-            if (MultiSceneCore.Instance == null)
-                return;
-            InteractableLootbox[] findBox = MultiSceneCore.Instance.gameObject.GetComponentsInChildren<InteractableLootbox>();
-            if (findBox != null && findBox.Length>0)
-            {
-                for (int i = 0; i < findBox.Length; i++)
+                holdTimerV += Time.deltaTime;
+                if (holdTimerV >= HOLD_THRESHOLD_V)
                 {
-                    if (!allBox.Contains(findBox[i]) && !dogGetBox.Contains(findBox[i]) && !destoryBox.Contains(findBox[i]))
-                        allBox.Add(findBox[i]);
+                    DropAllBoxes();
+                    isHoldingV = false;
                 }
             }
         }
 
-        float petHeight = 0.7f;
-        float boxHeight = 0.5f;
-
-
-        bool getting = false;
-        bool waitDogMove = false;
-        InteractableLootbox tempLootBox = null;
-
-        float dogMoveOnceTime = 0;
-        private void GetOneBox()
+        private void TogglePickMode()
         {
-            if (IsInMove)
-                return;
-
-            if (allBox.Count > 0 && !getting)
-            {
-                if (petAI != null)
-                {
-                    getting = true;
-
-                    tempLootBox = allBox[0];
-                    if(tempLootBox == null) //其他mod删除对象，做空判断
-                    {
-                        tempLootBox = null;
-                        allBox.RemoveAt(0);
-                        getting = false;
-                    }
-                    else
-                    {
-                        //狗去添盒子
-                        petAI.standByPos = tempLootBox.transform.position;
-                        petAI.standBy = true;
-                        waitDogMove = true;
-                    }
-                }
-            }
-            //等待狗移动到盒子上
-            if (getting && waitDogMove)
-            {
-                if(petControl == null)
-                {
-                    petControl = LevelManager.Instance.PetCharacter;
-                }
-                if (petControl == null || tempLootBox==null)
-                    return;
-
-                Vector3 tempPetXZ = tempLootBox.transform.position;
-                tempPetXZ.y = petControl.transform.position.y;
-                float dis = Vector3.Distance(petControl.transform.position, tempPetXZ);
-                if (dis > 10)
-                {
-                    petControl.transform.position = tempLootBox.transform.position;
-                    dogMoveOnceTime = 0;
-                }
-                else if (dis < 1f)
-                {
-                    waitDogMove = false;
-
-
-                    if (ChangeLootBox())
-                    {
-                        dogGetBox.Add(tempLootBox);
-                    }
-                    else//如果执行失败，这个包不要了
-                    {
-                        destoryBox.Add(tempLootBox);
-                    }
-
-                    allBox.Remove(tempLootBox);
-                    tempLootBox = null;
-                    if (petAI == null)
-                        petAI = petControl.GetComponentInChildren<PetAI>();
-
-                    petAI.standBy = false;
-                    getting = false;
-                    dogMoveOnceTime = 0;
-                }
-                else//
-                {
-                    dogMoveOnceTime += Time.deltaTime;
-                    //狗子5秒移不到位置的，直接顺序上去
-                    if (dogMoveOnceTime > 5)
-                    {
-                        dogMoveOnceTime = 0;
-                        petControl.transform.position = tempLootBox.transform.position;
-                    }
-                }
-            }
-
+            isPickMode = !isPickMode;
+            petAI.standBy = !isPickMode;
+            player.PopText(isPickMode ? "上！" : "狗子歇歇吧～", 5f);
         }
 
-        private bool ChangeLootBox()
+        #endregion
+
+        #region Box Collection Logic
+
+        private void FindAndCollectBoxes()
         {
-            try
+            if (isMovingToBox) return;
+            
+            // Find all boxes in scene
+            FindAllBoxes();
+            
+            // Collect nearest box if available
+            if (allBoxes.Count > 0)
             {
-                if (tempLootBox.GetComponentInChildren<InteractableOnlyDrop>(true) == null)
+                targetBox = allBoxes[0];
+                if (targetBox != null)
                 {
-                    //新的交互动作添加
-                    GameObject tempDropComponent = new GameObject("SxerInteractableOnlyDrop");
-                    InteractableOnlyDrop onlyDrop = tempDropComponent.AddComponent<InteractableOnlyDrop>();
-                    onlyDrop.InteractName = "移除";
-                    onlyDrop.enabled = true;
-                    onlyDrop.MarkerActive = false;
-                    onlyDrop.whenDrop += SortOnce;
-                    tempDropComponent.transform.SetParent(tempLootBox.transform);
-                    tempDropComponent.transform.localPosition = Vector3.zero;
-                    //原盒子交互组添加新的动作
-                    List<InteractableBase> tempListBase = Traverse.Create(tempLootBox).Field("otherInterablesInGroup").GetValue<List<InteractableBase>>();
-                    tempListBase.Add(onlyDrop);
-                    tempLootBox.GetInteractableList();//更新
-                                                      
-                   
+                    MoveToBox(targetBox);
                 }
                 else
                 {
-                    tempLootBox.GetComponentInChildren<InteractableOnlyDrop>(true).gameObject.SetActive(true);
+                    allBoxes.RemoveAt(0);
                 }
-
-
-                //对原始的修改
-                //interList添加新的对象并更新
-                //把Carriable隐藏
-                //取消物理学效果
-                //设置父物体
-                //转移位置
-
-
-                //取消物理运动学效果
-                SetRigidbodyActive(false, tempLootBox.GetComponent<Rigidbody>(), tempLootBox);
-                //隐藏掉搬运动作
-                tempLootBox.GetComponentInChildren<InteractableCarriable>().gameObject.SetActive(false);
-               
-                //到狗身上
-                tempLootBox.transform.SetParent(dogBoxParent);
-                tempLootBox.transform.localPosition = new Vector3(0, petHeight + boxHeight * dogGetBox.Count, 0);
-
-                return true;
-            }
-            catch
-            {
-                //还原
-
-
-                return false;
-
-
-            }
-
-        }
-
-
-        public void SortOnce(InteractableOnlyDrop dropItem)
-        {
-            if (dropItem == null)
-                return;
-            InteractableLootbox tempLootBoxX = dropItem.transform.parent.GetComponent<InteractableLootbox>();
-            if (tempLootBoxX != null)
-            {
-
-                StartCoroutine(Drop(dropItem, tempLootBoxX, CharacterMainControl.Main.transform.forward));
-
-                destoryBox.Add(tempLootBoxX);
-                dogGetBox.Remove(tempLootBoxX);
-                StartCoroutine(MoveAction());
             }
         }
 
-        bool IsInMove = false;
-        List<Vector3> targetPositions = new List<Vector3>();
-        IEnumerator MoveAction()
+        private void FindAllBoxes()
         {
-            yield return new WaitForEndOfFrame();
+            if (MultiSceneCore.Instance == null) return;
+            
+            var boxes = MultiSceneCore.Instance.GetComponentsInChildren<InteractableLootbox>();
+            foreach (var box in boxes)
+            {
+                if (!allBoxes.Contains(box) && 
+                    !carriedBoxes.Contains(box) && 
+                    !discardedBoxes.Contains(box))
+                {
+                    allBoxes.Add(box);
+                }
+            }
+        }
 
-            if (dogGetBox.Count < 1)
+        private void MoveToBox(InteractableLootbox box)
+        {
+            if (box == null || pet == null) return;
+            
+            isMovingToBox = true;
+            petAI.standByPos = box.transform.position;
+            petAI.standBy = true;
+            
+            StartCoroutine(MoveToBoxCoroutine(box));
+        }
+
+        private IEnumerator MoveToBoxCoroutine(InteractableLootbox box)
+        {
+            if (box == null || pet == null)
+            {
+                isMovingToBox = false;
                 yield break;
-
-            IsInMove = true;
-            // 计算需要移动的总距离（第一个物体需要移动到petHeight，其他物体同步移动相同距离）
-            float totalMoveDistance = dogGetBox[0].transform.localPosition.y - petHeight;
-
-            // 提前计算所有物体的目标位置（固定值，不随移动变化）
-            targetPositions.Clear();
-            foreach (var obj in dogGetBox)
-            {
-                // 每个物体的目标y值 = 当前y值 - 总移动距离（整体下移相同距离）
-                Vector3 targetPos = new Vector3(0, obj.transform.localPosition.y - totalMoveDistance, 0);
-                targetPositions.Add(targetPos);
             }
-
-            // 移动循环：所有物体同时移动，直到第一个物体到达目标
-            while (IsInMove)
+            
+            float moveTimer = 0f;
+            
+            while (isMovingToBox)
             {
-                // 标记是否所有物体都到达目标
-                bool allReached = true;
-
-                // 同时移动所有物体（同一帧内完成，避免卡顿）
-                for (int i = 0; i < dogGetBox.Count; i++)
+                if (pet == null || box == null)
                 {
-                    var obj = dogGetBox[i];
-                    var targetPos = targetPositions[i];
-
-                    // 向目标位置移动（速度可自定义，这里用0.5f作为平滑系数）
-                    obj.transform.localPosition = Vector3.MoveTowards(
-                        obj.transform.localPosition,
-                        targetPos,
-                        Time.deltaTime * 5f // 移动速度（可调整）
-                    );
-
-                    // 检查是否到达目标（允许微小误差）
-                    if (Vector3.Distance(obj.transform.localPosition, targetPos) > 0.01f)
+                    isMovingToBox = false;
+                    yield break;
+                }
+                
+                // Check distance to box
+                Vector3 petXZ = new Vector3(box.transform.position.x, pet.transform.position.y, box.transform.position.z);
+                float distance = Vector3.Distance(pet.transform.position, petXZ);
+                
+                if (distance < 1f)
+                {
+                    // Arrived at box - collect it
+                    CollectBox(box);
+                    break;
+                }
+                else if (distance > 10f)
+                {
+                    // Too far - teleport to box
+                    pet.transform.position = box.transform.position;
+                    moveTimer = 0f;
+                }
+                else
+                {
+                    // Keep moving
+                    moveTimer += Time.deltaTime;
+                    if (moveTimer > MOVE_TIMEOUT)
                     {
-                        allReached = false;
+                        // Timeout - teleport to box
+                        pet.transform.position = box.transform.position;
+                        moveTimer = 0f;
                     }
                 }
+                
+                yield return null;
+            }
+            
+            isMovingToBox = false;
+        }
 
-                // 如果所有物体都到达目标，终止移动
-                if (allReached)
+        private void CollectBox(InteractableLootbox box)
+        {
+            if (box == null) return;
+            
+            try
+            {
+                // Add drop interaction if not exists
+                var dropComponent = box.GetComponentInChildren<InteractableOnlyDrop>(true);
+                if (dropComponent == null)
                 {
-                    IsInMove = false;
-                    // 强制设置到精确位置（避免误差）
-                    for (int i = 0; i < dogGetBox.Count; i++)
-                    {
-                        dogGetBox[i].transform.localPosition = targetPositions[i];
-                    }
+                    var dropObj = new GameObject("SxerInteractableOnlyDrop");
+                    dropComponent = dropObj.AddComponent<InteractableOnlyDrop>();
+                    dropComponent.InteractName = "移除";
+                    dropComponent.enabled = true;
+                    dropComponent.MarkerActive = false;
+                    dropComponent.onDrop += OnBoxDropped;
+                    dropObj.transform.SetParent(box.transform);
+                    dropObj.transform.localPosition = Vector3.zero;
+                    
+                    // Add to interaction group
+                    var interactables = Traverse.Create(box).Field("otherInterablesInGroup").GetValue<List<InteractableBase>>();
+                    interactables.Add(dropComponent);
+                    box.GetInteractableList();
                 }
-
-                yield return null; // 等待下一帧
+                else
+                {
+                    dropComponent.gameObject.SetActive(true);
+                }
+                
+                // Disable physics and hide carry interaction
+                var rb = box.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.isKinematic = true;
+                    rb.interpolation = RigidbodyInterpolation.None;
+                }
+                
+                var carryComponent = box.GetComponentInChildren<InteractableCarriable>();
+                if (carryComponent != null)
+                {
+                    carryComponent.gameObject.SetActive(false);
+                }
+                
+                // Set as child of pet and position
+                box.transform.SetParent(dogBoxParent);
+                box.transform.localPosition = new Vector3(0, PET_HEIGHT + BOX_HEIGHT * carriedBoxes.Count, 0);
+                
+                // Update collections
+                allBoxes.Remove(box);
+                carriedBoxes.Add(box);
+                targetBox = null;
+                
+                // Stop following
+                petAI.standBy = false;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error collecting box: {ex.Message}");
+                discardedBoxes.Add(box);
+                allBoxes.Remove(box);
+                targetBox = null;
             }
         }
 
+        #endregion
 
+        #region Box Dropping Logic
 
-
-
-        IEnumerator Drop(InteractableOnlyDrop dropComponent,InteractableLootbox lootBox,Vector3 dir)
+        private void DropAllBoxes()
         {
-            //隐藏交互
+            player.PopText("开始卸货", 5f);
+            
+            if (carriedBoxes.Count <= 0) return;
+            
+            // Calculate drop direction
+            Vector3 dropDirection = player.transform.forward;
+            
+            // Create rotation for spreading boxes
+            Vector3 direction = dropDirection;
+            Vector3 rotateAxis = Vector3.up;
+            Quaternion rotation = Quaternion.AngleAxis(360f / carriedBoxes.Count, rotateAxis);
+            
+            // Drop each box
+            for (int i = carriedBoxes.Count - 1; i >= 0; i--)
+            {
+                var box = carriedBoxes[i];
+                if (box != null)
+                {
+                    Vector3 newDir = rotation * direction;
+                    direction = newDir;
+                    
+                    var dropComponent = box.GetComponentInChildren<InteractableOnlyDrop>(true);
+                    if (dropComponent != null)
+                    {
+                        StartCoroutine(DropBox(dropComponent, box, newDir));
+                    }
+                }
+            }
+            
+            // Update collections
+            discardedBoxes.AddRange(carriedBoxes);
+            carriedBoxes.Clear();
+            
+            // Reset state
+            isPickMode = false;
+        }
+
+        private void OnBoxDropped(InteractableOnlyDrop dropComponent)
+        {
+            if (dropComponent == null) return;
+            
+            var box = dropComponent.transform.parent.GetComponent<InteractableLootbox>();
+            if (box != null)
+            {
+                StartCoroutine(DropBox(dropComponent, box, player.transform.forward));
+                discardedBoxes.Add(box);
+                carriedBoxes.Remove(box);
+                StartCoroutine(RearrangeBoxes());
+            }
+        }
+
+        private IEnumerator DropBox(InteractableOnlyDrop dropComponent, InteractableLootbox box, Vector3 direction)
+        {
+            // Hide drop component
             dropComponent.gameObject.SetActive(false);
-
-            //移动到原父物体
-            MultiSceneCore.MoveToActiveWithScene(lootBox.gameObject, SceneManager.GetActiveScene().buildIndex);
-            SetRigidbodyActive(true, lootBox.GetComponent<Rigidbody>(), lootBox);
-            lootBox.GetComponent<Rigidbody>().velocity = dir * 5.5f + lootBox.transform.up * 0.5f;
-
-
-            //List<InteractableBase> tempListBase = Traverse.Create(lootBox).Field("otherInterablesInGroup").GetValue<List<InteractableBase>>();
-            //tempListBase.Remove(dropComponent);
-            //baseLootBox.GetInteractableList();//更新
-            //打开carry
-            lootBox.GetComponentInChildren<InteractableCarriable>(true).gameObject.SetActive(true);
-            yield return new WaitForSeconds(3f);
-            SetRigidbodyActive(false, lootBox.GetComponent<Rigidbody>(), lootBox);
-
-
-        }
-        public void SetRigidbodyActive(bool active, Rigidbody rb, InteractableLootbox lootbox)
-        {
-            if (active)
+            
+            // Move to active scene
+            MultiSceneCore.MoveToActiveWithScene(box.gameObject, SceneManager.GetActiveScene().buildIndex);
+            
+            // Enable physics
+            var rb = box.GetComponent<Rigidbody>();
+            if (rb != null)
             {
                 rb.isKinematic = false;
                 rb.interpolation = RigidbodyInterpolation.Interpolate;
-                if (lootbox && lootbox.interactCollider)
-                {
-                    lootbox.interactCollider.isTrigger = false;
-                    return;
-                }
+                rb.velocity = direction * DROP_FORCE + Vector3.up * DROP_UPWARD_FORCE;
             }
-            else
+            
+            // Re-enable carry interaction
+            var carryComponent = box.GetComponentInChildren<InteractableCarriable>(true);
+            if (carryComponent != null)
+            {
+                carryComponent.gameObject.SetActive(true);
+            }
+            
+            // Wait and disable physics again
+            yield return new WaitForSeconds(3f);
+            
+            if (rb != null)
             {
                 rb.isKinematic = true;
                 rb.interpolation = RigidbodyInterpolation.None;
-                if (lootbox && lootbox.interactCollider)
+            }
+        }
+
+        private IEnumerator RearrangeBoxes()
+        {
+            yield return new WaitForEndOfFrame();
+            
+            if (carriedBoxes.Count <= 0) yield break;
+            
+            // Calculate movement distance
+            float totalMoveDistance = carriedBoxes[0].transform.localPosition.y - PET_HEIGHT;
+            
+            // Move all boxes down by the same amount
+            for (int i = 0; i < carriedBoxes.Count; i++)
+            {
+                var box = carriedBoxes[i];
+                if (box != null)
                 {
-                    lootbox.interactCollider.isTrigger = true;
+                    Vector3 targetPos = new Vector3(0, box.transform.localPosition.y - totalMoveDistance, 0);
+                    box.transform.localPosition = targetPos;
                 }
             }
         }
 
-
+        #endregion
     }
+
+    #region InteractableOnlyDrop Component
+
+    public class InteractableOnlyDrop : InteractableBase
+    {
+        public Action<InteractableOnlyDrop> onDrop;
+
+        protected override bool IsInteractable() => true;
+
+        protected override void OnInteractFinished()
+        {
+            if (!interactCharacter) return;
+            onDrop?.Invoke(this);
+        }
+
+        public void ForceDrop(Vector3 direction)
+        {
+            GameObject.Destroy(interactCollider);
+            StartCoroutine(Drop(direction));
+        }
+
+        private IEnumerator Drop(Vector3 direction)
+        {
+            yield return null;
+            // Implementation handled in main class
+        }
+    }
+
+    #endregion
 }
