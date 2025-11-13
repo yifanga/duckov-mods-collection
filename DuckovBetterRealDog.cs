@@ -3,6 +3,7 @@ using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,6 +12,12 @@ namespace DuckovBetterRealDog
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
         #region Fields and Properties
+
+        public static FieldInfo LootboxDisplayNameKeyField = typeof(InteractableLootbox).GetField("displayNameKey",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static FieldInfo LootboxBaseOtherInterablesInGroupField = typeof(InteractableBase).GetField("otherInterablesInGroup",
+                BindingFlags.NonPublic | BindingFlags.Instance);
         
         // Components
         private CharacterMainControl player;
@@ -128,20 +135,29 @@ namespace DuckovBetterRealDog
                 isHoldingV = true;
                 holdTimerV = 0f;
             }
-            
+
             if (Input.GetKeyUp(KeyCode.V))
             {
+                if (isHoldingV)
+                {
+                    // 按键释放时判断是短按还是长按
+                    if (holdTimerV < HOLD_THRESHOLD_V)
+                    {
+                        // 短按 - 轻柔投掷
+                        DropAllBoxes(0.2f);
+                    }
+                    else
+                    {
+                        // 长按 - 强力投掷
+                        DropAllBoxes(DROP_FORCE);
+                    }
+                }
                 isHoldingV = false;
             }
-            
+
             if (isHoldingV)
             {
                 holdTimerV += Time.deltaTime;
-                if (holdTimerV >= HOLD_THRESHOLD_V)
-                {
-                    DropAllBoxes();
-                    isHoldingV = false;
-                }
             }
         }
 
@@ -185,7 +201,17 @@ namespace DuckovBetterRealDog
             var boxes = MultiSceneCore.Instance.GetComponentsInChildren<InteractableLootbox>();
             foreach (var box in boxes)
             {
-                if (box != null && !allBoxes.Contains(box) && 
+                // 如果box搜索过，则跳过处理
+                if(null == box || !box.needInspect)
+                {
+                    continue;
+                }
+
+                // 只有敌人的盒子才会去捡
+                string nameKey = (string)LootboxDisplayNameKeyField.GetValue(box);
+                bool isEnemyBox = "UI_LootBox_Loot".Equals(nameKey);
+
+                if (isEnemyBox && !allBoxes.Contains(box) && 
                     !carriedBoxes.Contains(box) && 
                     !discardedBoxes.Contains(box))
                 {
@@ -275,12 +301,13 @@ namespace DuckovBetterRealDog
                     dropComponent.onDrop += OnBoxDropped;
                     dropObj.transform.SetParent(box.transform);
                     dropObj.transform.localPosition = Vector3.zero;
+                    LootboxBaseOtherInterablesInGroupField?.SetValue(dropComponent, new List<InteractableBase>());
                     
                     // Add to interaction group
-                    var interactables = Traverse.Create(box).Field("otherInterablesInGroup").GetValue<List<InteractableBase>>();
-                    if (interactables != null)
+                    var tempListBase = Traverse.Create(box).Field("otherInterablesInGroup").GetValue<List<InteractableBase>>();
+                    if (tempListBase != null)
                     {
-                        interactables.Add(dropComponent);
+                        tempListBase.Add(dropComponent);
                         box.GetInteractableList();
                     }
                 }
@@ -294,9 +321,7 @@ namespace DuckovBetterRealDog
                 var rb = box.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
-                    rb.isKinematic = true;
-                    rb.interpolation = RigidbodyInterpolation.None;
-                    rb.useGravity = false;
+                    SetRigidbodyActive(false, rb, box);
                 }
                 
                 var carryComponent = box.GetComponentInChildren<InteractableCarriable>();
@@ -330,7 +355,7 @@ namespace DuckovBetterRealDog
 
         #region Box Dropping Logic
 
-        private void DropAllBoxes()
+        private void DropAllBoxes(float dropForce)
         {
             player.PopText("开始卸货", 5f);
             
@@ -357,7 +382,7 @@ namespace DuckovBetterRealDog
                     var dropComponent = box.GetComponentInChildren<InteractableOnlyDrop>(true);
                     if (dropComponent != null)
                     {
-                        StartCoroutine(DropBox(dropComponent, box, newDir));
+                        StartCoroutine(DropBox(dropComponent, box, newDir, dropForce));
                     }
                 }
             }
@@ -384,7 +409,7 @@ namespace DuckovBetterRealDog
             }
         }
 
-        private IEnumerator DropBox(InteractableOnlyDrop dropComponent, InteractableLootbox box, Vector3 direction)
+        private IEnumerator DropBox(InteractableOnlyDrop dropComponent, InteractableLootbox box, Vector3 direction, float dropForce = DROP_FORCE)
         {
             if (dropComponent == null || box == null) yield break;
             
@@ -416,13 +441,10 @@ namespace DuckovBetterRealDog
                 box.transform.SetParent(null);
                 
                 // Configure rigidbody for proper physics
-                rb.isKinematic = false;
-                rb.useGravity = true;
-                rb.interpolation = RigidbodyInterpolation.Interpolate;
-                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                SetRigidbodyActive(true, rb, box);
                 
                 // Apply velocity
-                rb.velocity = direction.normalized * DROP_FORCE + Vector3.up * DROP_UPWARD_FORCE;
+                rb.velocity = direction.normalized * dropForce + Vector3.up * DROP_UPWARD_FORCE;
                 
                 // Reset angular velocity
                 rb.angularVelocity = Vector3.zero;
@@ -440,15 +462,9 @@ namespace DuckovBetterRealDog
             }
             // Final cleanup after delay
             yield return new WaitForSeconds(2.9f);
-            
-            if (rb != null && rb.gameObject.activeInHierarchy)
+            if (rb != null)
             {
-                // Final physics stabilization
-                rb.velocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-                rb.isKinematic = true;
-                rb.useGravity = false;
-                rb.interpolation = RigidbodyInterpolation.None;
+                SetRigidbodyActive(true, rb, box);
             }
         }
 
@@ -473,6 +489,29 @@ namespace DuckovBetterRealDog
             }
         }
 
+        public void SetRigidbodyActive(bool active, Rigidbody rb, InteractableLootbox lootbox)
+        {
+            if (active)
+            {
+                rb.isKinematic = false;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;
+                if (lootbox && lootbox.interactCollider)
+                {
+                    lootbox.interactCollider.isTrigger = false;
+                    return;
+                }
+            }
+            else
+            {
+                rb.isKinematic = true;
+                rb.interpolation = RigidbodyInterpolation.None;
+                if (lootbox && lootbox.interactCollider)
+                {
+                    lootbox.interactCollider.isTrigger = true;
+                }
+            }
+        }
+
         #endregion
     }
 
@@ -483,6 +522,8 @@ namespace DuckovBetterRealDog
         public Action<InteractableOnlyDrop> onDrop;
 
         protected override bool IsInteractable() => true;
+
+
 
         protected override void OnInteractFinished()
         {
@@ -507,4 +548,6 @@ namespace DuckovBetterRealDog
     }
 
     #endregion
+
+    
 }
