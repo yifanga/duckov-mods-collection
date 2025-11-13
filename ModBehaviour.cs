@@ -21,6 +21,8 @@ namespace LootNearbyItem
         private float lastHKeyPressTime = 0f;
         private float lastBubbleTime = 0f;
 
+        private static List<InteractableLootbox> CacheLootBoxes = new List<InteractableLootbox>();
+
         void OnEnable()
         {
             // 初始化配置
@@ -147,6 +149,15 @@ namespace LootNearbyItem
         private void HandleBoxClosed()
         {
             Debug.Log($"箱子已经关闭，剩余物品已经丢出，箱子即将销毁");
+            if(null != CacheLootBoxes && CacheLootBoxes.Count > 0)
+            {
+                // 每次搜索结束，同步触发box的互动结束
+                foreach (var box in CacheLootBoxes)
+                {
+                    box?.InternalStopInteract();
+                }
+                CacheLootBoxes.Clear();
+            }
             DynamicLootBoxManager.Instance.OnBoxClosed -= HandleBoxClosed;
         }
 
@@ -158,6 +169,8 @@ namespace LootNearbyItem
             Collider[] colliders = new Collider[1000];
             LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
             CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
+            // 每次搜索清空缓存
+            CacheLootBoxes.Clear();
 
             if (null == main || !main.IsMainCharacter)
             {
@@ -232,6 +245,8 @@ namespace LootNearbyItem
                             // 如果后续是为了拾取，则提前标记好箱子状态为已搜索
                             tmpBox.SetMarkerUsed();
                             tmpBox.needInspect = false;
+                            tmpBox.Inventory.hasBeenInspectedInLootBox = true;
+                            CacheLootBoxes.Add(tmpBox);
                         }
 
                     }
