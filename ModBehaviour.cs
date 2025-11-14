@@ -48,7 +48,7 @@ namespace LootNearbyItem
         void OnDisable()
         {
             // 清理监听配置
-            ModManager.OnModActivated += ModConfigManager.OnModConfigMenuActivated;
+            ModManager.OnModActivated -= ModConfigManager.OnModConfigMenuActivated;
             ModManager.OnModActivated -= DynamicHarmonyPatcher.OnModConfigMenuActivated;
             ModConfigAPI.SafeRemoveOnOptionsChangedDelegate(ModConfigManager.OnModConfigOptionsChanged);
 
