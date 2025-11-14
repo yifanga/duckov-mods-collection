@@ -21,6 +21,9 @@
 		<Reference Include="$(DuckovPath)\Managed\0Harmony.dll">
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="$(DuckovPath)\Managed\SodaLocalization.dll">
+			<Private>False</Private>
+		</Reference>
 		<!-- <Reference Include="$(DuckovPath)\Managed\Plugins.dll" /> -->
 	</ItemGroup>
 	<ItemGroup>

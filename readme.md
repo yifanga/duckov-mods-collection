@@ -15,6 +15,8 @@
 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3599144451]https://steamcommunity.com/sharedfiles/filedetails/?id=3599144451[/url]
 
 使用介绍：
+目前已支持按键自定义，需要订阅ModConfig并进入地图，修改按键后实时生效
+默认按键如下：
 【长按L开启关闭功能】
 【长按V卸下所有盒子】
 【短按V卸下盒子到脚下(不散开)】
