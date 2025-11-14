@@ -13,6 +13,8 @@ namespace DuckovBetterRealDog
         public string togglePetSearchKey = "L";
         public string unloadPetItemsKey = "V";
 
+        public bool toggleNormalPattern  = false;
+
         [NonSerialized] public KeyCode togglePetSearchKeyCode = KeyCode.L;
         [NonSerialized] public KeyCode unloadPetItemsKeyCode = KeyCode.V;
     }
@@ -106,6 +108,13 @@ namespace DuckovBetterRealDog
             var keyOptions = LocalizationUtil.GetKeyMappingDictionary();
 
             // 注册配置项
+            ModConfigAPI.SafeAddBoolDropdownList(
+                MOD_NAME,
+                "ToggleNormalPatternSetting",
+                LocalizationUtil.ToggleNormalPatternSetting,
+                _current.toggleNormalPattern
+            );
+
             ModConfigAPI.SafeAddDropdownList(
                 MOD_NAME,
                 "UnloadPetItemsKey",
@@ -139,6 +148,7 @@ namespace DuckovBetterRealDog
         {
             string newToggleKey = ModConfigAPI.SafeLoad<string>(MOD_NAME, "TogglePetSearchKey", "L");
             string newUnloadKey = ModConfigAPI.SafeLoad<string>(MOD_NAME, "UnloadPetItemsKey", "V");
+            _current.toggleNormalPattern = ModConfigAPI.SafeLoad<bool>(MOD_NAME, "ToggleNormalPatternSetting", false);
 
             // 验证按键有效性
             _current.togglePetSearchKey = newToggleKey;
@@ -165,6 +175,7 @@ namespace DuckovBetterRealDog
         // 快捷访问器
         public static KeyCode ToggleSearchKey => _current.togglePetSearchKeyCode;
         public static KeyCode UnloadItemsKey => _current.unloadPetItemsKeyCode;
+        public static bool  ToggleNormalPattern => _current.toggleNormalPattern;
         
     }
 }

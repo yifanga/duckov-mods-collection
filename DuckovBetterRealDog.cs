@@ -130,8 +130,6 @@ namespace DuckovBetterRealDog
             {
                 FindAndCollectBoxes();
             }
-            // 添加角度控制
-            UpdateLetterFacingAngle();
         }
 
         #endregion
@@ -141,13 +139,13 @@ namespace DuckovBetterRealDog
         private void HandleInput()
         {
             // Handle L key (toggle pick mode)
-            if (Input.GetKeyDown(ModConfigManager.Current.togglePetSearchKeyCode))
+            if (Input.GetKeyDown(ModConfigManager.ToggleSearchKey))
             {
                 isHoldingL = true;
                 holdTimerL = 0f;
             }
 
-            if (Input.GetKeyUp(ModConfigManager.Current.togglePetSearchKeyCode))
+            if (Input.GetKeyUp(ModConfigManager.ToggleSearchKey))
             {
                 isHoldingL = false;
             }
@@ -163,13 +161,13 @@ namespace DuckovBetterRealDog
             }
 
             // Handle V key (drop all boxes)
-            if (Input.GetKeyDown(ModConfigManager.Current.unloadPetItemsKeyCode))
+            if (Input.GetKeyDown(ModConfigManager.UnloadItemsKey))
             {
                 isHoldingV = true;
                 holdTimerV = 0f;
             }
 
-            if (Input.GetKeyUp(ModConfigManager.Current.unloadPetItemsKeyCode))
+            if (Input.GetKeyUp(ModConfigManager.UnloadItemsKey))
             {
                 if (isHoldingV)
                 {
@@ -380,7 +378,10 @@ namespace DuckovBetterRealDog
                 petAI.standBy = false;
 
                 // 收集完成后，尝试更新字母构建
-                UpdateLetterFormationImmediately();
+                if (!ModConfigManager.ToggleNormalPattern)
+                {
+                    UpdateLetterFormationImmediately();
+                }
             }
             catch (Exception ex)
             {
@@ -558,14 +559,7 @@ namespace DuckovBetterRealDog
 
         #region build word
 
-        // 新增角度控制方法
-        private void UpdateLetterFacingAngle()
-        {
-            // if (Input.GetKeyDown(KeyCode.Comma))     // < 键逆时针
-            //     letterFacingAngle -= 15f;
-            // else if (Input.GetKeyDown(KeyCode.Period)) // > 键顺时针
-            //     letterFacingAngle += 15f;
-        }
+
 
         // 在Initialize方法中初始化字母模式
         private void InitializeLetterPatterns()

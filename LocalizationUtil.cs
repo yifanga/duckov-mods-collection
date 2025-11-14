@@ -13,20 +13,21 @@ namespace DuckovBetterRealDog
 
         // 获取"地上散落物"的翻译（优化为更简洁的标题）
         public static string PetSearchToggleKeySetting => GetTranslation(
-      CurrentLanguage,
-      new TranslationSet
-      {
-          ChineseSimplified = "宠物拾取盒子开关键（长按）",
-          ChineseTraditional = "寵物拾取盒子開關鍵（長按）",
-          Japanese = "ペット収集ボックス切替（長押）",
-          English = "Pet loot toggle (long press)",
-          Korean = "펫 수집 토글 (길게)",
-          French = "Basculer butin animal (appui long)",
-          German = "Haustier-Beuteumschalter (lang)",
-          Russian = "Перекл. ящика питомца (долго)",
-          Spanish = "Alternar botín mascota (larga)"
-      }
-  );
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "宠物拾取盒子开关键（长按）",
+                ChineseTraditional = "寵物拾取盒子開關鍵（長按）",
+                Japanese = "ペット収集ボックス切替（長押）",
+                English = "Pet loot toggle (long press)",
+                Korean = "펫 수집 토글 (길게)",
+                French = "Basculer butin animal (appui long)",
+                German = "Haustier-Beuteumschalter (lang)",
+                Russian = "Перекл. ящика питомца (долго)",
+                Spanish = "Alternar botín mascota (larga)"
+            }
+        );
+
         public static string PetDropBoxKeySetting => GetTranslation(
             CurrentLanguage,
             new TranslationSet
@@ -40,6 +41,22 @@ namespace DuckovBetterRealDog
                 German = "Haustier-Entladen (kurz: Ort, lang: verteilen)",
                 Russian = "Клавиша разгрузки (кор: место, дл: разброс)",
                 Spanish = "Tecla descarga mascota (corto: lugar, largo: dispersar)"
+            }
+        );
+
+        public static string ToggleNormalPatternSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "宠物恢复正常盒子堆叠模式",
+                ChineseTraditional = "寵物恢復正常盒子堆疊模式",
+                Japanese = "ペット通常ボックス積みモード回復",
+                English = "Restore normal box stacking for pet",
+                Korean = "펫 정상 박스 적재 모드 복원",
+                French = "Rétablir l'empilement normal des boîtes pour animal",
+                German = "Normaler Kistenstapelmodus für Haustier wiederherstellen",
+                Russian = "Восстановить обычный режим стопки ящиков для питомца",
+                Spanish = "Restaurar modo apilamiento normal de cajas para mascota"
             }
         );
 
