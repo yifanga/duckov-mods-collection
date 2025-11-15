@@ -1,9 +1,12 @@
 ﻿using Duckov.Modding;
 using Duckov.Scenes;
+using Duckov.UI;
+using Duckov.UI.DialogueBubbles;
 using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -52,9 +55,7 @@ namespace DuckovBetterRealDog
         private const float DROP_FORCE = 5.5f;
         private const float DROP_UPWARD_FORCE = 0.5f;
 
-
         private string targetWord = "GODDOGGODDOGGODDOGGODDOGGODGODDOGGODDOGGODDOGGODDOGGODGODDOGGODDOGGODDOGGODDOGGOD";
-        private Dictionary<char, List<Vector2>> letterPatterns = new Dictionary<char, List<Vector2>>();
         private int currentLetterIndex = 0;
         private List<InteractableLootbox> arrangedBoxes = new List<InteractableLootbox>(); // 已经排列的箱子
 
@@ -66,6 +67,8 @@ namespace DuckovBetterRealDog
 
         private void OnEnable()
         {
+             // 初始化字母模式
+            LetterPatterns.Init();
             LevelManager.OnAfterLevelInitialized += Initialize;
 
             // 初始化配置
@@ -115,9 +118,9 @@ namespace DuckovBetterRealDog
             isPickMode = true;
             isMovingToBox = false;
             targetBox = null;
-
-            // 初始化字母模式
-            InitializeLetterPatterns();
+            
+            // update target word pattern
+            targetWord = string.Concat(Enumerable.Repeat(ModConfigManager.TargetWord, 1000));
 
             // 重置状态
             ResetLetterFormation();
@@ -147,7 +150,7 @@ namespace DuckovBetterRealDog
 
             if (Input.GetKeyUp(ModConfigManager.ToggleSearchKey))
             {
-                if (isHoldingL)
+                if (isHoldingL && (null == LootView.Instance || !LootView.Instance.open))
                 {
                     if (holdTimerL < HOLD_THRESHOLD_L)
                     {
@@ -569,45 +572,6 @@ namespace DuckovBetterRealDog
 
         #region build word
 
-
-
-        // 在Initialize方法中初始化字母模式
-        private void InitializeLetterPatterns()
-        {
-            // G字母模式 (使用9个点)
-            letterPatterns['G'] = new List<Vector2>
-            {
-                // 从下到上构建
-                new Vector2(0, 0), new Vector2(1, 0),
-                new Vector2(-1, 1), new Vector2(2, 1),
-                new Vector2(-1, 2), new Vector2(1, 2),new Vector2(2, 2),
-                new Vector2(-1, 3),
-                new Vector2(0, 4),new Vector2(1, 4),new Vector2(2, 4)
-            };
-
-            // O字母模式 (使用8个点)
-            letterPatterns['O'] = new List<Vector2>
-            {
-                // 从下到上构建
-                new Vector2(0, 0), new Vector2(1, 0),
-                new Vector2(-1,1), new Vector2(2, 1),
-                new Vector2(-1, 2), new Vector2(2, 2),
-                new Vector2(-1, 3), new Vector2(2, 3),
-                new Vector2(0, 4), new Vector2(1, 4),
-            };
-
-            // D字母模式 (使用8个点)
-            letterPatterns['D'] = new List<Vector2>
-            {
-                // 从下到上构建
-                new Vector2(0, 0), new Vector2(1, 0), new Vector2(-1, 0),
-                new Vector2(-1,1), new Vector2(2, 1),
-                new Vector2(-1, 2), new Vector2(2, 2),
-                new Vector2(-1, 3), new Vector2(2, 3),
-                new Vector2(-1, 4), new Vector2(0, 4), new Vector2(1, 4),
-            };
-        }
-
         // 更新字母构建
         // 立即更新字母构建（无动画，无提示）
         // 立即更新字母构建（竖直堆叠，支持角度）
@@ -619,13 +583,13 @@ namespace DuckovBetterRealDog
             while (currentLetterIndex < targetWord.Length)
             {
                 char currentLetter = targetWord[currentLetterIndex];
-                if (!letterPatterns.ContainsKey(currentLetter))
+                if (!LetterPatterns.Data.ContainsKey(currentLetter))
                 {
                     currentLetterIndex++;
                     continue;
                 }
 
-                List<Vector2> pattern = letterPatterns[currentLetter];
+                List<Vector2> pattern = LetterPatterns.Data[currentLetter];
                 int previousCount = GetPreviousLettersBoxCount();
                 int alreadyPlaced = arrangedBoxes.Count - previousCount;
 
@@ -654,7 +618,10 @@ namespace DuckovBetterRealDog
                     // 如果完成了3个字母，则人物吐泡泡
                     if (currentLetterIndex > 0 && currentLetterIndex % 3 == 0)
                     {
-                        player.PopText(GetRandomMessage(), 3f);
+                        // player.PopText(GetRandomMessage(), 3f);
+                        //
+                        DialogueBubblesManager.Show(GetRandomMessage(), pet.transform, duration: 3f);
+                        
                         break;
                     }
                 }
@@ -670,10 +637,10 @@ namespace DuckovBetterRealDog
             // 定义所有可能的字符串
             string[] messages = {
                 // "🐶+📦= GOD 🙏",
-                "世风日下",
+                "世风日下！",
                 "真的狗！",
                 "狗，上帝！",
-                "连劳登都不如！"
+                "连劳登都不如！",
             };
 
             // 使用 Unity 的随机数生成器
@@ -745,9 +712,9 @@ namespace DuckovBetterRealDog
             for (int i = 0; i < currentLetterIndex; i++)
             {
                 char letter = targetWord[i];
-                if (letterPatterns.ContainsKey(letter))
+                if (LetterPatterns.Data.ContainsKey(letter))
                 {
-                    count += letterPatterns[letter].Count;
+                    count += LetterPatterns.Data[letter].Count;
                 }
             }
             return count;

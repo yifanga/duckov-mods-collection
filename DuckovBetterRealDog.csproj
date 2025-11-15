@@ -24,6 +24,9 @@
 		<Reference Include="$(DuckovPath)\Managed\SodaLocalization.dll">
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="$(DuckovPath)\Managed\UniTask*">
+      		<Private>False</Private>
+    	</Reference>
 		<!-- <Reference Include="$(DuckovPath)\Managed\Plugins.dll" /> -->
 	</ItemGroup>
 	<ItemGroup>

@@ -15,6 +15,8 @@ namespace DuckovBetterRealDog
 
         public bool toggleNormalPattern  = false;
 
+        public string targetWord = "GODDOG";
+
         [NonSerialized] public KeyCode togglePetSearchKeyCode = KeyCode.L;
         [NonSerialized] public KeyCode unloadPetItemsKeyCode = KeyCode.V;
     }
@@ -96,6 +98,8 @@ namespace DuckovBetterRealDog
     {
         private const string MOD_NAME = "DuckovBetterRealDog";
 
+        private const string VALID_CHAR = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!?0123456789";
+
         // 参考 ModConfigManager 的有效按键范围
 
         public static void SetupModConfig()
@@ -108,6 +112,15 @@ namespace DuckovBetterRealDog
             var keyOptions = LocalizationUtil.GetKeyMappingDictionary();
 
             // 注册配置项
+            ModConfigAPI.SafeAddInputWithSlider(
+                MOD_NAME,
+                "WordPatternSetting",
+                LocalizationUtil.WordPatternSetting,
+                typeof(string),
+                _current.targetWord,
+                null
+            );
+
             ModConfigAPI.SafeAddBoolDropdownList(
                 MOD_NAME,
                 "ToggleNormalPatternSetting",
@@ -148,7 +161,6 @@ namespace DuckovBetterRealDog
         {
             string newToggleKey = ModConfigAPI.SafeLoad<string>(MOD_NAME, "TogglePetSearchKey", "L");
             string newUnloadKey = ModConfigAPI.SafeLoad<string>(MOD_NAME, "UnloadPetItemsKey", "V");
-            _current.toggleNormalPattern = ModConfigAPI.SafeLoad<bool>(MOD_NAME, "ToggleNormalPatternSetting", false);
 
             // 验证按键有效性
             _current.togglePetSearchKey = newToggleKey;
@@ -158,7 +170,23 @@ namespace DuckovBetterRealDog
             _current.unloadPetItemsKey = newUnloadKey;
             if (Enum.TryParse(newUnloadKey, true, out KeyCode uk))
                 _current.unloadPetItemsKeyCode = uk;
+
+            _current.toggleNormalPattern = ModConfigAPI.SafeLoad<bool>(MOD_NAME, "ToggleNormalPatternSetting", false);
+
         
+            string wordPattern = ModConfigAPI.SafeLoad<string>(MOD_NAME, "WordPatternSetting", "GODDOG");
+            if(null == wordPattern || wordPattern.Length == 0)
+            {
+                throw new ArgumentException("Invalid Empty wordPattern! " + wordPattern);
+            }
+            foreach (char c in wordPattern)
+            {
+                if (!VALID_CHAR.Contains(c))
+                {
+                    throw new ArgumentException("Invalid Char! " + c);
+                }
+            }
+            _current.targetWord = wordPattern;
         }
 
         public static void OnModConfigMenuActivated(ModInfo info, Duckov.Modding.ModBehaviour behaviour)
@@ -176,6 +204,7 @@ namespace DuckovBetterRealDog
         public static KeyCode ToggleSearchKey => _current.togglePetSearchKeyCode;
         public static KeyCode UnloadItemsKey => _current.unloadPetItemsKeyCode;
         public static bool  ToggleNormalPattern => _current.toggleNormalPattern;
+        public static string TargetWord => _current.targetWord;
         
     }
 }
