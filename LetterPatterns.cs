@@ -144,15 +144,16 @@ namespace DuckovBetterRealDog
             };
 
             // L字母模式
+            // L字母模式
             Data['L'] = new List<Vector2>
             {
                 // 从下到上构建
-                new(-0.5f, 0f),new(0.5f, 0f),new(1.5f, 0f),
-                new(-0.5f, 1f),
-                new(-0.5f, 2f),
-                new(-0.5f, 3f),
-                new(-0.5f, 4f),
-
+                new(-1.0f, 0f),new(0.0f, 0f),new(1.0f, 0f),new(2.0f, 0f),
+                new(-1.0f, 1f),
+                new(-1.0f, 2f),
+                new(-1.0f, 3f),
+                new(-1.0f, 4f),
+                
             };
 
             // M字母模式
@@ -204,15 +205,16 @@ namespace DuckovBetterRealDog
             };
 
             // Q字母模式
+            // Q字母模式
             Data['Q'] = new List<Vector2>
             {
                 // 从下到上构建
                 new(-0.5f, 0f),new(0.5f, 0f),new(2.5f, 0f),
                 new(-1.5f, 1f),new(1.5f, 1f),
-                new(-1.5f, 2f),new(1.5f, 2f),
+                new(-1.5f, 2f),new(0.5f, 2f),new(1.5f, 2f),
                 new(-1.5f, 3f),new(1.5f, 3f),
                 new(-0.5f, 4f),new(0.5f, 4f),
-
+                
             };
 
             // R字母模式

@@ -120,7 +120,8 @@ namespace DuckovBetterRealDog
             targetBox = null;
             
             // update target word pattern
-            targetWord = string.Concat(Enumerable.Repeat(ModConfigManager.TargetWord, 1000));
+            string reverseWord = new string(ModConfigManager.TargetWord.Reverse().ToArray());
+            targetWord = string.Concat(Enumerable.Repeat(reverseWord, 1000));
 
             // 重置状态
             ResetLetterFormation();

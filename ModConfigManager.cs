@@ -177,12 +177,14 @@ namespace DuckovBetterRealDog
             string wordPattern = ModConfigAPI.SafeLoad<string>(MOD_NAME, "WordPatternSetting", "GODDOG");
             if(null == wordPattern || wordPattern.Length == 0)
             {
+                ModConfigAPI.SafeSave<string>(MOD_NAME, "WordPatternSetting", "GODDOG");
                 throw new ArgumentException("Invalid Empty wordPattern! " + wordPattern);
             }
             foreach (char c in wordPattern)
             {
                 if (!VALID_CHAR.Contains(c))
                 {
+                    ModConfigAPI.SafeSave<string>(MOD_NAME, "WordPatternSetting", "GODDOG");
                     throw new ArgumentException("Invalid Char! " + c);
                 }
             }
