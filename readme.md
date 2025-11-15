@@ -61,6 +61,8 @@
 [*] 目前已施工完毕！有任何建议欢迎评论提出
 [/list]
 
+[h3]特别说明，依赖均为可选，不安装也可使用本mod大部分功能[/h3]
+
 [hr]
 [h1]One-Click Ground Item Search[/h1]
 Recommended modes:
@@ -92,3 +94,4 @@ Best paired with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=359
 [list]
 [*] Development completed! Suggestions welcome
 [/list]
+[h3]Important Note: All dependencies are optional - most features work without them![/h3]
