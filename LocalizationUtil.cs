@@ -64,15 +64,15 @@ namespace DuckovBetterRealDog
             CurrentLanguage,
             new TranslationSet
             {
-                ChineseSimplified = "宠物堆叠文本设定(下到上,支持A-Z和0-9和!?)",
-                ChineseTraditional = "寵物堆疊文字設定(下到上,支援A-Z和0-9和!?)",
-                Japanese = "ペット積み文字設定(下→上, A-Z/0-9/!?対応)",
-                English = "Pet stacking text setting (bottom-up, A-Z/0-9/!? supported)",
-                Korean = "펫 적재 문자 설정(하→상, A-Z/0-9/!? 지원)",
-                French = "Réglage texte empilement animal (bas-haut, A-Z/0-9/!? supportés)",
-                German = "Haustier-Stapeltext-Einstellung (unten-oben, A-Z/0-9/!? unterstützt)",
-                Russian = "Настройка текста стопки питомца (снизу-вверх, A-Z/0-9/!? поддерживаются)",
-                Spanish = "Configuración texto apilamiento mascota (abajo-arriba, A-Z/0-9/!? compatibles)"
+                ChineseSimplified = "宠物堆叠文本设定(上到下,支持A-Z和0-9和!?)",
+                ChineseTraditional = "寵物堆疊文字設定(上到下,支援A-Z和0-9和!?)",
+                Japanese = "ペット積み文字設定(上→下, A-Z/0-9/!?対応)",
+                English = "Pet stacking text setting (top-down, A-Z/0-9/!? supported)",
+                Korean = "펫 적재 문자 설정(상→하, A-Z/0-9/!? 지원)",
+                French = "Réglage texte empilement animal (haut-bas, A-Z/0-9/!? supportés)",
+                German = "Haustier-Stapeltext-Einstellung (oben-unten, A-Z/0-9/!? unterstützt)",
+                Russian = "Настройка текста стопки питомца (сверху-вниз, A-Z/0-9/!? поддерживаются)",
+                Spanish = "Configuración texto apilamiento mascota (arriba-abajo, A-Z/0-9/!? compatibles)"
             }
         );
 
