@@ -58,7 +58,7 @@ namespace DuckovBetterRealDog
         private int currentLetterIndex = 0;
         private List<InteractableLootbox> arrangedBoxes = new List<InteractableLootbox>(); // 已经排列的箱子
 
-        private float letterFacingAngle = 30f; // 字母朝向角度（相对于狗的正面）
+        private float letterFacingAngle = 20f;
 
         #endregion
 
@@ -147,17 +147,24 @@ namespace DuckovBetterRealDog
 
             if (Input.GetKeyUp(ModConfigManager.ToggleSearchKey))
             {
+                if (isHoldingL)
+                {
+                    if (holdTimerL < HOLD_THRESHOLD_L)
+                    {
+                       TogglePickMode();
+                    }
+                    else 
+                    {
+                        TogglePickMode();
+                    }
+                }
                 isHoldingL = false;
+                
             }
 
             if (isHoldingL)
             {
                 holdTimerL += Time.deltaTime;
-                if (holdTimerL >= HOLD_THRESHOLD_L)
-                {
-                    TogglePickMode();
-                    isHoldingL = false;
-                }
             }
 
             // Handle V key (drop all boxes)
@@ -398,7 +405,10 @@ namespace DuckovBetterRealDog
 
         private void DropAllBoxes(float dropForce)
         {
-            player.PopText("开始卸货", 5f);
+            player.PopText("开始卸货", 3f);
+            var localPickMode = isPickMode;
+            isPickMode = false;
+
 
             if (carriedBoxes.Count <= 0) return;
 
@@ -434,8 +444,8 @@ namespace DuckovBetterRealDog
             // 重置字母构建状态
             ResetLetterFormation();
 
-            // Reset state
-            isPickMode = false;
+            // Reset back state
+            isPickMode = localPickMode;
         }
 
         private void OnBoxDropped(InteractableOnlyDrop dropComponent)
@@ -672,6 +682,29 @@ namespace DuckovBetterRealDog
             return messages[randomIndex];
         }
 
+        /// <summary>
+        /// 使用罗德里格公式旋转向量
+        /// </summary>
+        /// <param name="v">原始向量</param>
+        /// <param name="k">旋转轴（会自动归一化）</param>
+        /// <param name="theta">旋转角度（弧度）</param>
+        /// <returns>旋转后的向量</returns>
+        public static Vector3 RodriguesRotate(Vector3 v, Vector3 k, float theta)
+        {
+            // 归一化旋转轴
+            k = k.normalized;
+            theta *= Mathf.Deg2Rad;
+            float cosTheta = Mathf.Cos(theta);
+            float sinTheta = Mathf.Sin(theta);
+
+            // 罗德里格公式的三个部分
+            Vector3 term1 = v * cosTheta;
+            Vector3 term2 = Vector3.Cross(k, v) * sinTheta;
+            Vector3 term3 = k * Vector3.Dot(k, v) * (1 - cosTheta);
+
+            return term1 + term2 + term3;
+        }
+
         // 旋转点
         private Vector3 RotatePoint(Vector3 point, float angleDegrees)
         {
@@ -679,10 +712,29 @@ namespace DuckovBetterRealDog
             float cos = Mathf.Cos(angleRad);
             float sin = Mathf.Sin(angleRad);
 
-            return new Vector3(
+            var res = new Vector3(
                 point.x * cos - point.z * sin,
                 point.y,
                 point.x * sin + point.z * cos
+            );
+            angleRad = 30 * Mathf.Deg2Rad;
+            cos = Mathf.Cos(angleRad);
+            sin = Mathf.Sin(angleRad);
+
+            res = new Vector3(
+                res.x,
+                res.y * cos - res.z * sin,
+                res.y * sin + res.z * cos
+            );
+
+            // return res;
+            angleRad = 60 * Mathf.Deg2Rad;
+            cos = Mathf.Cos(angleRad);
+            sin = Mathf.Sin(angleRad);
+            return new Vector3(
+                res.y * sin + res.x * cos,
+                res.y * cos - res.x * sin,
+                res.z
             );
         }
 
@@ -703,7 +755,7 @@ namespace DuckovBetterRealDog
         // 立即构建当前字母（竖直堆叠，支持角度）
         private void BuildCurrentLetterImmediately(List<Vector2> pattern, int previousCount, int alreadyPlaced, int availableBoxes, float letterCount)
         {
-            Vector2 margin = new Vector2(0.8f, 0.8f);
+            Vector2 margin = new Vector2(0.6f, 0.65f);
             // 计算这次要放置多少个箱子
             int toPlace = Mathf.Min(availableBoxes, pattern.Count - alreadyPlaced);
 
@@ -730,14 +782,16 @@ namespace DuckovBetterRealDog
                         //竖直要叠加上个字母的高度,以及在向上偏移一个单位
                         offsetPos.y += letterCount * 5 * margin.y + margin.y;
 
-                        offsetPos = RotatePoint(offsetPos, letterFacingAngle);
+                        // offsetPos = RotatePoint(offsetPos, letterFacingAngle);
 
+                        offsetPos = RodriguesRotate(offsetPos, new Vector3(0, 1, 0), -30);
+                        offsetPos = RodriguesRotate(offsetPos, new Vector3(Mathf.Sqrt(3), 0, 1), 30);
 
                         // 旋转位置，直接设置位置，无动画
                         // 计算世界坐标（相对于狗的位置）
                         Vector3 worldPos = pet.transform.position + offsetPos;
                         box.transform.position = worldPos;
-                        box.transform.rotation = Quaternion.Euler(0, letterFacingAngle, 0);
+                        box.transform.rotation = Quaternion.Euler(0, 60, 0);
                         arrangedBoxes.Add(box);
                     }
                 }
