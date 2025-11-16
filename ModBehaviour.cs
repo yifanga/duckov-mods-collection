@@ -26,7 +26,6 @@ namespace AutoFilterKeyAndFormula
             harmony = new Harmony(HarmonyId);
             // 直接应用补丁
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-
         }
 
         void OnDisable()

@@ -178,5 +178,33 @@ namespace AutoFilterKeyAndFormula
 			}
 		}
 
+		[HarmonyPatch(typeof(GamingConsoleView), "OnOpen")]
+		[HarmonyPostfix]
+		public static void OnGamingConsoleOpenPostfix(GamingConsoleView __instance)
+		{
+			try
+			{
+				// 使用反射获取私有字段 InventoryDisplay对象
+				var playerStorageInventoryDisplay = GetMemberValue(__instance, "storageInventory");
+
+				if (playerStorageInventoryDisplay == null)
+				{
+					Debug.LogError("GamingConsoleView Failed to get  inventory display instances");
+					return;
+				}
+
+				// 应用自定义过滤器
+				Func<Item, bool> filter = (Item e) => (null != e && e.Tags.Contains("MiniGame")) ? true : false;
+				// inventoryDisplay.SetFilter(filter);
+				playerStorageInventoryDisplay.SetFilter(filter);
+
+				Debug.Log("GamingConsoleView Custom  filters applied successfully");
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"Error in GamingConsoleView: {ex}");
+			}
+		}
+
 	}
 }
