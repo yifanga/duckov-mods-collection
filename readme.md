@@ -43,9 +43,12 @@ Enhanced support for Medical Formula registration. Medical Formulas should now b
 • 矿机管理：仓库仅显示显卡和比特币（背包不过滤，方便取出比特币）
 • 物品维修：仅显示可维修物品
 • 物品分解：仓库仅显示可分解物品（背包不过滤，方便操作分解产物）
+• 游戏机组装：仓库仅显示游戏相关物品（背包不过滤，方便拆装游戏机和卡带）
 
 [b]🔄 更新日志：[/b]
-[list][*] [b]2025-10-31[/b]
+[list][*] [b]2025-11-16[/b]
+    - 新增游戏机组装界面过滤
+[*] [b]2025-10-31[/b]
     - 新增物品维修界面过滤
     - 新增物品分解界面过滤
 [*] [b]2025-10-28[/b]
@@ -65,8 +68,11 @@ Optimizes item display in multiple interfaces by automatically filtering irrelev
 • Mining Rig: Storage shows only GPUs and Bitcoins (backpack unfiltered)
 • Item Repair: Shows only repairable items
 • Item Decomposition: Storage shows only decomposable items (backpack unfiltered)
+• Game Assembly: Storage shows only game-related items (backpack unfiltered)
 [b]🔄 Changelog:[/b]
-[list][*] [b]2025-10-31[/b]
+[list][*] [b]2025-11-16[/b]
+    - Added game assembly interface filter
+[*] [b]2025-10-31[/b]
     - Added item repair interface filter
     - Added item decomposition interface filter
 [*] [b]2025-10-28[/b]
