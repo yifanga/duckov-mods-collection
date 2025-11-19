@@ -17,6 +17,10 @@ namespace DuckovBetterRealDog
 
         public string targetWord = "GODDOG";
 
+        public bool togglePetAlwaysFollow  = false;
+
+        public int petSearchMode = 0;
+
         [NonSerialized] public KeyCode togglePetSearchKeyCode = KeyCode.L;
         [NonSerialized] public KeyCode unloadPetItemsKeyCode = KeyCode.V;
     }
@@ -110,6 +114,23 @@ namespace DuckovBetterRealDog
 
             // 创建按键选项字典
             var keyOptions = LocalizationUtil.GetKeyMappingDictionary();
+            var modeOptions = LocalizationUtil.GetSearchModeDictionary();
+
+            ModConfigAPI.SafeAddDropdownList(
+                MOD_NAME,
+                "PetSearchModeSetting",
+                LocalizationUtil.PetSearchModeSetting,
+                modeOptions,
+                typeof(int),
+                _current.petSearchMode
+            );
+
+            ModConfigAPI.SafeAddBoolDropdownList(
+                MOD_NAME,
+                "TogglePetAlwaysFollowSetting",
+                LocalizationUtil.TogglePetAlwaysFollowSetting,
+                _current.togglePetAlwaysFollow
+            );
 
             // 注册配置项
             ModConfigAPI.SafeAddInputWithSlider(
@@ -189,6 +210,9 @@ namespace DuckovBetterRealDog
                 }
             }
             _current.targetWord = wordPattern;
+
+            _current.togglePetAlwaysFollow = ModConfigAPI.SafeLoad<bool>(MOD_NAME, "TogglePetAlwaysFollowSetting", false);
+            _current.petSearchMode = ModConfigAPI.SafeLoad<int>(MOD_NAME, "PetSearchModeSetting", 0);
         }
 
         public static void OnModConfigMenuActivated(ModInfo info, Duckov.Modding.ModBehaviour behaviour)
@@ -207,6 +231,8 @@ namespace DuckovBetterRealDog
         public static KeyCode UnloadItemsKey => _current.unloadPetItemsKeyCode;
         public static bool  ToggleNormalPattern => _current.toggleNormalPattern;
         public static string TargetWord => _current.targetWord;
+        public static bool TogglePetAlwaysFollow => _current.togglePetAlwaysFollow;
+        public static int PetSearchMode => _current.petSearchMode;
         
     }
 }

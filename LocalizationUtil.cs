@@ -48,7 +48,7 @@ namespace DuckovBetterRealDog
             CurrentLanguage,
             new TranslationSet
             {
-                ChineseSimplified = "宠物恢复正常盒子堆叠模式",
+                ChineseSimplified = "宠物恢复正常盒子堆叠模式(切换地图生效)",
                 ChineseTraditional = "寵物恢復正常盒子堆疊模式",
                 Japanese = "ペット通常ボックス積みモード回復",
                 English = "Restore normal box stacking for pet",
@@ -64,7 +64,7 @@ namespace DuckovBetterRealDog
             CurrentLanguage,
             new TranslationSet
             {
-                ChineseSimplified = "宠物堆叠文本设定(上到下,支持A-Z和0-9和!?)",
+                ChineseSimplified = "宠物堆叠文本设定(切换地图生效,上到下,支持A-Z和0-9和!?)",
                 ChineseTraditional = "寵物堆疊文字設定(上到下,支援A-Z和0-9和!?)",
                 Japanese = "ペット積み文字設定(上→下, A-Z/0-9/!?対応)",
                 English = "Pet stacking text setting (top-down, A-Z/0-9/!? supported)",
@@ -73,6 +73,38 @@ namespace DuckovBetterRealDog
                 German = "Haustier-Stapeltext-Einstellung (oben-unten, A-Z/0-9/!? unterstützt)",
                 Russian = "Настройка текста стопки питомца (сверху-вниз, A-Z/0-9/!? поддерживаются)",
                 Spanish = "Configuración texto apilamiento mascota (arriba-abajo, A-Z/0-9/!? compatibles)"
+            }
+        );
+
+        public static string TogglePetAlwaysFollowSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "宠物是否总是跟随(即使关闭搜索)",
+                ChineseTraditional = "寵物是否總是跟隨(即使關閉搜索)",
+                Japanese = "ペットは常に追従しますか?(検索オフ時でも)",
+                English = "Pet always follow? (even when search off)",
+                Korean = "펫 항상 따라옴? (검색 꺼져도)",
+                French = "Animal suit toujours? (même recherche désactivée)",
+                German = "Haustier folgt immer? (auch bei Suche aus)",
+                Russian = "Питомец всегда следует? (даже при выкл. поиске)",
+                Spanish = "¿Mascota sigue siempre? (aunque búsqueda desactivada)"
+            }
+        );
+
+        public static string PetSearchModeSetting => GetTranslation(
+            CurrentLanguage,
+            new TranslationSet
+            {
+                ChineseSimplified = "宠物搜索模式设定",
+                ChineseTraditional = "寵物搜索模式設定",
+                Japanese = "ペット搜索モード設定",
+                English = "Pet search mode setting",
+                Korean = "펫 검색 모드 설정",
+                French = "Réglage mode recherche animal",
+                German = "Haustier-Suchmodus-Einstellung",
+                Russian = "Настройка режима поиска питомца",
+                Spanish = "Configuración modo búsqueda mascota"
             }
         );
 
@@ -292,6 +324,37 @@ namespace DuckovBetterRealDog
             };
 
             return chineseLanguages.Contains(LocalizationManager.CurrentLanguage);
+        }
+
+
+
+        private static SortedDictionary<string, int> BuildSearchModeDictionary()
+        {
+            var modeMapping = new SortedDictionary<string, int>();
+
+            modeMapping.Add("全图搜索", 0);
+            modeMapping.Add("附近25m搜索", 1);
+
+            return modeMapping;
+        }
+
+        private static SortedDictionary<string, int> BuildEnglishSearchModeDictionary()
+        {
+            var modeMapping = new SortedDictionary<string, int>();
+
+            modeMapping.Add("Full Map", 0);
+            modeMapping.Add("Nearby<=25m", 1);
+
+            return modeMapping;
+        }
+
+        public static SortedDictionary<string, object> GetSearchModeDictionary()
+        {
+            if (UseChinese())
+            {
+                return ConvertToObjectDictionary(BuildSearchModeDictionary());
+            }
+            return ConvertToObjectDictionary(BuildEnglishSearchModeDictionary());
         }
 
     }

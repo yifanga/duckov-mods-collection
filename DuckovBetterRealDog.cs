@@ -55,6 +55,8 @@ namespace DuckovBetterRealDog
         private const float DROP_FORCE = 5.5f;
         private const float DROP_UPWARD_FORCE = 0.5f;
 
+
+        private bool toggleNormalPattern = false;
         private string targetWord = "GODDOGGODDOGGODDOGGODDOGGODGODDOGGODDOGGODDOGGODDOGGODGODDOGGODDOGGODDOGGODDOGGOD";
         private int currentLetterIndex = 0;
         private List<InteractableLootbox> arrangedBoxes = new List<InteractableLootbox>(); // 已经排列的箱子
@@ -67,7 +69,7 @@ namespace DuckovBetterRealDog
 
         private void OnEnable()
         {
-             // 初始化字母模式
+            // 初始化字母模式
             LetterPatterns.Init();
             LevelManager.OnAfterLevelInitialized += Initialize;
 
@@ -118,10 +120,11 @@ namespace DuckovBetterRealDog
             isPickMode = true;
             isMovingToBox = false;
             targetBox = null;
-            
+
             // update target word pattern
             string reverseWord = new string(ModConfigManager.TargetWord.Reverse().ToArray());
             targetWord = string.Concat(Enumerable.Repeat(reverseWord, 1000));
+            toggleNormalPattern = ModConfigManager.ToggleNormalPattern;
 
             // 重置状态
             ResetLetterFormation();
@@ -155,15 +158,15 @@ namespace DuckovBetterRealDog
                 {
                     if (holdTimerL < HOLD_THRESHOLD_L)
                     {
-                       TogglePickMode();
+                        TogglePickMode();
                     }
-                    else 
+                    else
                     {
                         TogglePickMode();
                     }
                 }
                 isHoldingL = false;
-                
+
             }
 
             if (isHoldingL)
@@ -206,7 +209,14 @@ namespace DuckovBetterRealDog
         private void TogglePickMode()
         {
             isPickMode = !isPickMode;
-            petAI.standBy = !isPickMode;
+            if (ModConfigManager.TogglePetAlwaysFollow)
+            {
+                petAI.standBy = false;
+            }
+            else
+            {
+                petAI.standBy = !isPickMode;
+            }
             if (petAI.standBy)
             {
                 petAI.standByPos = petAI.transform.position;
@@ -223,7 +233,14 @@ namespace DuckovBetterRealDog
             if (isMovingToBox) return;
 
             // Find all boxes in scene
-            FindAllBoxes();
+            if (ModConfigManager.PetSearchMode == 1)
+            {
+                FindAllNearbyBoxes();
+            }
+            else
+            {
+                FindAllBoxes();
+            }
 
             // Collect nearest box if available
             if (allBoxes.Count > 0)
@@ -266,6 +283,51 @@ namespace DuckovBetterRealDog
             }
         }
 
+        private void FindAllNearbyBoxes()
+        {
+            Collider[] colliders = new Collider[300];
+            LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
+            CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
+            if (null == main || !main.IsMainCharacter)
+            {
+                return;
+            }
+            Vector3 mainPosition = main.transform.position;
+            int num = Physics.OverlapSphereNonAlloc(mainPosition, 25f, colliders, interactLayers);
+            if (num <= 0)
+            {
+                return;
+            }
+            // 逐个计算距离和排序
+            float[] distances = new float[num];
+            for (int i = 0; i < num; i++)
+            {
+                Collider collider = colliders[i];
+                float distance = Vector3.Distance(mainPosition, collider.ClosestPoint(mainPosition));
+                distances[i] = distance;
+            }
+            Array.Sort(distances, colliders, 0, num);
+            // 从近到远遍历处理可交互物品
+            for (int i = 0; i < num; i++)
+            {
+                Collider collider = colliders[i];
+                InteractableLootbox box = collider.GetComponent<InteractableLootbox>();
+
+                // 如果box搜索过，则跳过处理
+                if (null == box || !box.needInspect)
+                {
+                    continue;
+                }
+                string nameKey = (string)LootboxDisplayNameKeyField.GetValue(box);
+                bool isEnemyBox = "UI_LootBox_Loot".Equals(nameKey);
+                if (isEnemyBox && !allBoxes.Contains(box) && !carriedBoxes.Contains(box) && !discardedBoxes.Contains(box))
+                {
+                    allBoxes.Add(box);
+                }
+            }
+        }
+
+
         private void MoveToBox(InteractableLootbox box)
         {
             if (box == null || pet == null) return;
@@ -299,13 +361,20 @@ namespace DuckovBetterRealDog
                 Vector3 petXZ = new Vector3(box.transform.position.x, pet.transform.position.y, box.transform.position.z);
                 float distance = Vector3.Distance(pet.transform.position, petXZ);
 
+                // 默认10m，切换为附近搜索后改为25m
+                float disThreshold = 10f;
+                if (ModConfigManager.PetSearchMode == 1)
+                {
+                    disThreshold = 25f;
+                }
+
                 if (distance < 1f)
                 {
                     // Arrived at box - collect it
                     CollectBox(box);
                     break;
                 }
-                else if (distance > 10f)
+                else if (distance > disThreshold)
                 {
                     // Too far - teleport to box
                     pet.transform.position = box.transform.position;
@@ -389,7 +458,7 @@ namespace DuckovBetterRealDog
                 petAI.standBy = false;
 
                 // 收集完成后，尝试更新字母构建
-                if (!ModConfigManager.ToggleNormalPattern)
+                if (!toggleNormalPattern)
                 {
                     UpdateLetterFormationImmediately();
                 }
@@ -459,11 +528,45 @@ namespace DuckovBetterRealDog
             var box = dropComponent.transform.parent?.GetComponent<InteractableLootbox>();
             if (box != null)
             {
+                var curPosition = box.transform.position;
                 StartCoroutine(DropBox(dropComponent, box, player.transform.forward));
                 discardedBoxes.Add(box);
                 carriedBoxes.Remove(box);
-                StartCoroutine(RearrangeBoxes());
+                if (toggleNormalPattern)
+                {
+                    StartCoroutine(RearrangeBoxes());
+                }
+                else
+                {
+                    var newBox = SwapRemove(arrangedBoxes, box);
+                    if (newBox != null)
+                    {
+                        newBox.transform.position = curPosition;
+                    }
+                    if(GetPreviousLettersBoxCount() > arrangedBoxes.Count)
+                    {
+                        currentLetterIndex--;
+                    }
+                }
             }
+        }
+
+        public static T? SwapRemove<T>(List<T> list, T item)
+        {
+            int index = list.IndexOf(item);
+            if (index == -1) return default(T);
+
+            if (index == list.Count - 1)
+            {
+                list.RemoveAt(index);
+            }
+            else
+            {
+                list[index] = list[^1];
+                list.RemoveAt(list.Count - 1);
+                return list[index];
+            }
+            return default(T);
         }
 
         private IEnumerator DropBox(InteractableOnlyDrop dropComponent, InteractableLootbox box, Vector3 direction, float dropForce = DROP_FORCE)
@@ -616,13 +719,13 @@ namespace DuckovBetterRealDog
                 if (alreadyPlaced >= pattern.Count)
                 {
                     currentLetterIndex++;
-                    // 如果完成了3个字母，则人物吐泡泡
+                    // 如果完成了3个字母，则pet吐泡泡
                     if (currentLetterIndex > 0 && currentLetterIndex % 3 == 0)
                     {
                         // player.PopText(GetRandomMessage(), 3f);
                         //
                         DialogueBubblesManager.Show(GetRandomMessage(), pet.transform, duration: 3f);
-                        
+
                         break;
                     }
                 }
@@ -638,6 +741,7 @@ namespace DuckovBetterRealDog
             // 定义所有可能的字符串
             string[] messages = {
                 // "🐶+📦= GOD 🙏",
+                ModConfigManager.TargetWord,
                 "世风日下！",
                 "真的狗！",
                 "狗，上帝！",
