@@ -14,9 +14,6 @@ namespace LootNearbyItem
         public static FieldInfo LootViewPickAllButtonField = typeof(LootView).GetField("pickAllButton",
                 BindingFlags.NonPublic | BindingFlags.Instance);
 
-        public static FieldInfo LootViewStoreAllButtonField = typeof(LootView).GetField("storeAllButton",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-
         private const string HARMONY_ID = "LootNearbyItem.DynamicHarmonyPatcher";
         private static bool _isPatched = false;
 
@@ -117,13 +114,13 @@ namespace LootNearbyItem
 
         // 补丁方法
         private static void Postfix(LootView __instance)
-        {   
-            // 除仓库外，启用排序和拾取全部按钮
+        {
             // Debug.Log("LootNearbyItem Harmony postfix, start");
-            if (null != LootView.Instance &&  PlayerStorage.Inventory != LootView.Instance.TargetInventory)
+            if (null != DynamicLootBoxManager.Instance && null != LootView.Instance
+                && DynamicLootBoxManager.Instance.CurrentBoxInventory != null
+                && DynamicLootBoxManager.Instance.CurrentBoxInventory == LootView.Instance.TargetInventory)
             {
                 ((Button)LootViewPickAllButtonField.GetValue(__instance))?.gameObject.SetActive(true);
-                ((Button)LootViewStoreAllButtonField.GetValue(__instance))?.gameObject.SetActive(true);
             }
             // Debug.Log("LootNearbyItem Harmony postfix, end");
         }
