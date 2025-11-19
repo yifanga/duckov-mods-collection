@@ -7,12 +7,18 @@ using Unity.VisualScripting;
 using Duckov.UI.DialogueBubbles;
 using Duckov.Modding;
 using System;
+using Duckov;
+using System.Reflection;
+using static Duckov.DeadBodyManager;
 
 namespace LootNearbyItem
 {
 
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
+        private static FieldInfo DeadBodyManagerDeathInfosField = typeof(DeadBodyManager).GetField("deaths",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+    
         private static readonly float KEY_DEBOUNCE_TIME = 0.5f; // 防抖时间500毫秒
         private static readonly float BUBBLES_TIME = 1.5f; // 气泡防抖时间500毫秒
         private static readonly float DEFAULT_SEARCH_RADIUS = 0.3f; // 默认搜索半径0.3m
@@ -22,6 +28,7 @@ namespace LootNearbyItem
         private float lastBubbleTime = 0f;
 
         private static List<InteractableLootbox> CacheLootBoxes = new List<InteractableLootbox>();
+        private static List<InteractableLootbox> CacheTombBoxes = new List<InteractableLootbox>();
 
         void OnEnable()
         {
@@ -149,6 +156,13 @@ namespace LootNearbyItem
         private void HandleBoxClosed()
         {
             Debug.Log($"箱子已经关闭，剩余物品已经丢出，箱子即将销毁");
+            if(null!= CacheTombBoxes && CacheTombBoxes.Count > 0)
+            {
+                foreach (var box in CacheTombBoxes)
+                {
+                    TryFindDeathInfoAndTouch(box);
+                }
+            }
             if(null != CacheLootBoxes && CacheLootBoxes.Count > 0)
             {
                 // 每次搜索结束，同步触发box的互动结束
@@ -171,6 +185,7 @@ namespace LootNearbyItem
             CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
             // 每次搜索清空缓存
             CacheLootBoxes.Clear();
+            CacheTombBoxes.Clear();
 
             if (null == main || !main.IsMainCharacter)
             {
@@ -247,6 +262,10 @@ namespace LootNearbyItem
                             tmpBox.needInspect = false;
                             tmpBox.Inventory.hasBeenInspectedInLootBox = true;
                             CacheLootBoxes.Add(tmpBox);
+                            if ("UI_Interact_Tomb".Equals(nameKey))
+                            {
+                                CacheTombBoxes.Add(tmpBox);
+                            }
                         }
 
                     }
@@ -315,8 +334,12 @@ namespace LootNearbyItem
                         // Debug.Log($"find loot box for notify name key {nameKey} meetEnemyBox{meetEnemyBox} meetOtherBox {meetOtherBox} requireItem {tmpBox.requireItem}");
 
                         bool isEnemyBox = "UI_LootBox_Loot".Equals(nameKey);
+                        bool isOtherBox = !isEnemyBox &&
+                                ((null != nameKey && nameKey.StartsWith("UI_LootBox"))
+                                || "UI_Interact_Cloth".Equals(nameKey)
+                                || "UI_Interact_Tomb".Equals(nameKey));
                         // 处理击杀掉落的战利品盒子, 或者非击杀掉落且不需要物品条件的盒子
-                        if ((meetEnemyBox && isEnemyBox) || (meetOtherBox && !tmpBox.requireItem && !isEnemyBox))
+                        if ((meetEnemyBox && isEnemyBox) || (meetOtherBox && !tmpBox.requireItem && isOtherBox))
                         {
                             foreach (var item in tmpBox.Inventory)
                             {
@@ -333,5 +356,31 @@ namespace LootNearbyItem
             return false;
         }
 
+        private void TryFindDeathInfoAndTouch(InteractableLootbox box)
+        {
+            if(null == DeadBodyManager.Instance)
+            {
+                return;
+            }
+            List<DeathInfo> deaths = (List<DeathInfo>)DeadBodyManagerDeathInfosField.GetValue(DeadBodyManager.Instance);
+            if(null == deaths)
+            {
+                return;
+            }
+            // 只查找最近10次死亡记录
+            int maxCnt = 10;
+            foreach (var death in deaths.AsEnumerable().Reverse())
+            {
+                if(null != death && death.worldPosition == box.transform.position)
+                {
+                    death.touched = true;
+                    return;
+                }
+                if (maxCnt-- < 0)
+                {
+                    return;
+                }
+            }
+        }
     }
 }
