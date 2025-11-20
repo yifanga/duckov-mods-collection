@@ -597,8 +597,6 @@ namespace DuckovBetterRealDog
             var rb = box.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                // Reset transform before enabling physics
-                box.transform.SetParent(null);
 
                 // Configure rigidbody for proper physics
                 SetRigidbodyActive(true, rb, box);
