@@ -36,6 +36,7 @@ namespace DuckovBetterRealDog
         private readonly List<InteractableLootbox> discardedBoxes = new();
 
         // State management
+        private bool isDropMod = false;
         private bool isPickMode = true;
         private bool isMovingToBox = false;
         private bool isHoldingL = false;
@@ -117,6 +118,7 @@ namespace DuckovBetterRealDog
             discardedBoxes.Clear();
 
             // Reset state
+            isDropMod = false;
             isPickMode = true;
             isMovingToBox = false;
             targetBox = null;
@@ -208,6 +210,7 @@ namespace DuckovBetterRealDog
 
         private void TogglePickMode()
         {
+            isDropMod = false;
             isPickMode = !isPickMode;
             if (ModConfigManager.TogglePetAlwaysFollow)
             {
@@ -478,12 +481,22 @@ namespace DuckovBetterRealDog
 
         private void DropAllBoxes(float dropForce)
         {
-            player.PopText("开始卸货", 3f);
+            if (isDropMod)
+            {
+                Debug.Log("正在丢弃盒子过程中，忽略重复命令");
+                return;
+            }
+            
+            if (carriedBoxes.Count <= 0)
+            {
+                Debug.Log("身上没有盒子，忽略丢弃盒子命令");
+                return;
+            } 
+
+            isDropMod = true;
+            player.PopText("开始卸货", 2f);
             var localPickMode = isPickMode;
             isPickMode = false;
-
-
-            if (carriedBoxes.Count <= 0) return;
 
             // Calculate drop direction
             Vector3 dropDirection = player.transform.forward;
@@ -519,6 +532,7 @@ namespace DuckovBetterRealDog
 
             // Reset back state
             isPickMode = localPickMode;
+            isDropMod = false;
         }
 
         private void OnBoxDropped(InteractableOnlyDrop dropComponent)
