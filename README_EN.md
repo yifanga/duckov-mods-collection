@@ -1,9 +1,15 @@
 # Duckov Mods Collection
 
-This repository is a monorepo that aggregates several Duckov mods while preserving their individual histories.
+## Thanks
+This mod collection would not be possible without the generous sharing and support from other mod authors in the community. Thank you to all developers who contribute to the modding ecosystem. Their open-source projects, technical sharing, and experience exchange made this collection much easier to build. Special thanks to community members who provided inspiration, solved problems, and offered suggestions during development.
+
+## Introduction
+All mods in this repository are independently developed and shared by me. The code has been checked and cleaned up before open-sourcing. These mods aim to improve the game experience by addressing common pain points and helping other players.
+
+> 中文版说明：`README.md`
 
 ## Notes
-- Each mod keeps its own README and `info.ini` inside its folder. Original author notes and external links are preserved there.
+- Each mod keeps its own README and `info.ini` inside its folder for features and usage.
 - Some mods depend on `HarmonyLib`, which should be placed at the top of the mod list.
 
 ## Included mods
