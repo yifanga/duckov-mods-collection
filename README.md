@@ -1,32 +1,36 @@
 # 鸭科夫模组合集
 
+<p align="center">
+  <strong>中文</strong> | 
+  <a href="./README_EN.md">English</a>
+</p>
+
 ## 致谢
 本模组合集的开发离不开社区各位mod作者的无私分享与帮助。感谢所有为游戏mod社区做出贡献的开发者们，正是有了你们的开源项目、技术分享和经验交流，才让这个模组合集得以顺利开发。特别感谢那些在开发过程中提供灵感、解决问题和给予建议的社区成员。
 
 ## 介绍
 本仓库内所有模组均由我独立开发并分享，代码已做过检查与整理后开源发布。这些模组旨在优化游戏体验，解决一些常见痛点，希望能为其他玩家带来便利。
 
-> English version: `README_EN.md`
 
 ## 说明
 - 每个模组在各自子目录中，README 与 `info.ini` 记录功能说明与用法。
 - 部分模组依赖 `HarmonyLib`，需要在模组列表中置顶启用。
 
 ## 包含模组
-- 真正的狗(优化版)：适配一键搜索散落物，并优化拾取盒子逻辑。
+- 显示物品可用次数：显示钥匙可用次数、装备耐久与可用治疗量。
+- 钥匙和蓝图录入时自动过滤：在多个界面自动过滤无关物品。
 - 一键搜索散落物：一键搜索附近地面散落物与容器。
 - 更详细的重量状态：显示超重/负重/轻盈的精确差值。
-- 钥匙和蓝图录入时自动过滤：在多个界面自动过滤无关物品。
-- 显示物品可用次数：显示钥匙可用次数、装备耐久与可用治疗量。
+- 真正的狗(优化版)：适配一键搜索散落物，并优化拾取盒子逻辑。
 
 ## 预览
-| 模组 | 预览 |
-| --- | --- |
-| 真正的狗(优化版) | ![真正的狗(优化版)](DuckovBetterRealDog/preview.png) |
-| 一键搜索散落物 | ![一键搜索散落物](LootNearbyItem/preview.png) |
-| 更详细的重量状态 | ![更详细的重量状态](TagInventoryWeight/preview.png) |
-| 钥匙和蓝图录入时自动过滤 | ![钥匙和蓝图录入时自动过滤](AutoFilterKeyAndFormula/preview.png) |
-| 显示物品可用次数 | ![显示物品可用次数](ShowKeyValidTimes/preview.png) |
+| 模组 | 预览 | 链接 |
+| --- | --- | -- |
+| 显示物品可用次数 | ![显示物品可用次数](ShowKeyValidTimes/preview.png) | [Steam链接](https://steamcommunity.com/sharedfiles/filedetails/?id=3592946080)|
+| 钥匙和蓝图录入时自动过滤 | ![钥匙和蓝图录入时自动过滤](AutoFilterKeyAndFormula/preview.png) | [Steam链接](https://steamcommunity.com/sharedfiles/filedetails/?id=3594850431)|
+| 一键搜索散落物 | ![一键搜索散落物](LootNearbyItem/preview.png) | [Steam链接](https://steamcommunity.com/sharedfiles/filedetails/?id=3599144451)|
+| 更详细的重量状态 | ![更详细的重量状态](TagInventoryWeight/preview.png) | [Steam链接](https://steamcommunity.com/sharedfiles/filedetails/?id=3597089297)|
+| 真正的狗(优化版) | ![真正的狗(优化版)](DuckovBetterRealDog/preview.png) | [Steam链接](https://steamcommunity.com/sharedfiles/filedetails/?id=3605140925)|
 
 ## 开源许可
 Apache-2.0
