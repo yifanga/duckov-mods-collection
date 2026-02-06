@@ -1,1 +1,29 @@
+# sources used for subtree merge
 _sources/
+
+# build outputs
+**/bin/
+**/obj/
+**/release/
+**/.vs/
+
+# user / IDE
+**/*.user
+**/*.suo
+**/*.userprefs
+**/*.pidb
+**/*.booproj
+**/*.svclog
+**/*.scc
+**/*.vspx
+**/*.vssscc
+**/*.vspscc
+**/*.sln.docstates
+**/*.swp
+**/*.tmp
+**/*.log
+**/*.bak
+
+# OS
+.DS_Store
+Thumbs.db
