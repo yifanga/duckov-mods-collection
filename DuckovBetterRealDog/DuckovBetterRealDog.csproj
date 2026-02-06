@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Nullable>enable</Nullable>
+		<LangVersion>12.0</LangVersion>
+		<!-- This should be the folder that contains Duckov.exe -->
+		<!-- 下面这行里填写你的鸭科夫安装路径，这样编译器就能找到相关的dll文件 -->
+		<DuckovPath>E:\Steam\steamapps\common\Escape from Duckov\Duckov_Data</DuckovPath>
+	</PropertyGroup>
+	<ItemGroup>
+		<Reference Include="$(DuckovPath)\Managed\TeamSoda.*">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="$(DuckovPath)\Managed\ItemStatsSystem.dll">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="$(DuckovPath)\Managed\Unity*">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="$(DuckovPath)\Managed\0Harmony.dll">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="$(DuckovPath)\Managed\SodaLocalization.dll">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="$(DuckovPath)\Managed\UniTask*">
+      		<Private>False</Private>
+    	</Reference>
+		<!-- <Reference Include="$(DuckovPath)\Managed\Plugins.dll" /> -->
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Lib.Harmony" Version="2.4.1" />
+	</ItemGroup>
+</Project>
