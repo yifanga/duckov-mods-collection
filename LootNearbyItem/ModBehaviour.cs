@@ -1,28 +1,26 @@
-﻿using ItemStatsSystem;
-using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
-using Unity.VisualScripting;
-using Duckov.UI.DialogueBubbles;
-using Duckov.Modding;
-using System;
-using Duckov;
 using System.Reflection;
-using static Duckov.DeadBodyManager;
+using Cysharp.Threading.Tasks;
+using Duckov;
+using Duckov.Modding;
+using Duckov.UI;
+using Duckov.UI.DialogueBubbles;
+using ItemStatsSystem;
+using Unity.VisualScripting;
+using UnityEngine;
 
 namespace LootNearbyItem
 {
-
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
-        private static FieldInfo DeadBodyManagerDeathInfosField = typeof(DeadBodyManager).GetField("deaths",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-    
-        private static readonly float KEY_DEBOUNCE_TIME = 0.5f; // 防抖时间500毫秒
-        private static readonly float BUBBLES_TIME = 1.5f; // 气泡防抖时间500毫秒
-        private static readonly float DEFAULT_SEARCH_RADIUS = 0.3f; // 默认搜索半径0.3m
-        private static readonly int MAX_SEARCH_COUNT = 165; // 默认最大搜索物品数量（基本是5页，每页一般35个）
+        private static FieldInfo DeadBodyManagerDeathInfosField = typeof(DeadBodyManager).GetField("deaths", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly float KEY_DEBOUNCE_TIME = 0.5f;
+        private static readonly float BUBBLES_TIME = 1.5f;
+        private static readonly float DEFAULT_SEARCH_RADIUS = 0.3f;
+        private static readonly int MAX_SEARCH_COUNT = 165;
 
         private float lastHKeyPressTime = 0f;
         private float lastBubbleTime = 0f;
@@ -30,356 +28,350 @@ namespace LootNearbyItem
         private static List<InteractableLootbox> CacheLootBoxes = new List<InteractableLootbox>();
         private static List<InteractableLootbox> CacheTombBoxes = new List<InteractableLootbox>();
 
-        void OnEnable()
+        private void OnEnable()
         {
-            // 初始化配置
             ModConfigManager.Init(ModManager.DefaultModFolderPath);
-            // 监听配置，并随着配置更改随时保存
             ModManager.OnModActivated += ModConfigManager.OnModConfigMenuActivated;
-
-            // 随着后续mod启动，尝试查找harmony并patch
             ModManager.OnModActivated += DynamicHarmonyPatcher.OnModConfigMenuActivated;
 
-            // 立即检查一次，防止 ModConfig 已经加载但事件错过了
-            if (ModConfigAPI.IsAvailable())
-            {
-                Debug.Log("LootNearbyItem: ModConfig already available!");
-                ModConfigManager.SetupModConfig();
-                ModConfigManager.LoadConfigFromModConfig();
-            }
-            // 立即patch一次，防止已加载
             DynamicHarmonyPatcher.Initialize();
+            Debug.Log("[LootNearbyItem] mod enabled! 当前快捷键: " + ModConfigManager.GetSearchKeyCode()
+                + ", 搜索土堆: " + ModConfigManager.GetSearchHiddenContainers());
         }
 
-
-        void OnDisable()
+        protected override void OnAfterSetup()
         {
-            // 清理监听配置
+            base.OnAfterSetup();
+
+            // 优先使用ModSetting（参考CombatMaid，在OnAfterSetup中通过this.info初始化）
+            if (ModSettingAPI.Init(this.info))
+            {
+                Debug.Log("[LootNearbyItem] 使用ModSetting配置界面");
+                ModConfigManager.SetupModSetting();
+            }
+            else if (ModConfigAPI.IsAvailable())
+            {
+                Debug.Log("[LootNearbyItem] ModSetting不可用，使用ModConfig配置界面（本地config.txt优先）");
+                ModConfigManager.SetupModConfig();
+            }
+        }
+
+        private void OnDisable()
+        {
             ModManager.OnModActivated -= ModConfigManager.OnModConfigMenuActivated;
             ModManager.OnModActivated -= DynamicHarmonyPatcher.OnModConfigMenuActivated;
             ModConfigAPI.SafeRemoveOnOptionsChangedDelegate(ModConfigManager.OnModConfigOptionsChanged);
-
-            // 清理patch
             DynamicHarmonyPatcher.RemovePatch();
         }
 
-        void Update()
+        private void Update()
         {
-            // 检测按键按下
-            KeyCode hotKey = ModConfigManager.GetSearchKeyCode();
-            if (Input.GetKeyDown(hotKey))
-            {
-                // 防抖检查 - 防止连续触发
-                if (Time.time - lastHKeyPressTime < KEY_DEBOUNCE_TIME)
-                {
-                    Debug.Log("按键触发过于频繁，已忽略");
-                    return;
-                }
-                // 更新最后按键时间
-                lastHKeyPressTime = Time.time;
-                Debug.Log($"{hotKey} key pressed!");
-                // 检查是否已有战利品界面打开
-                if (null != DynamicLootBoxManager.Instance && DynamicLootBoxManager.Instance.IsLootViewOpen())
-                {
-                    Debug.Log("战利品界面已打开，忽略新请求");
-                    return;
-                }
+            KeyCode searchKeyCode = ModConfigManager.GetSearchKeyCode();
+            if (!Input.GetKeyDown(searchKeyCode)) return;
 
-                // 执行战利品或掉落物搜索逻辑
-                List<Item> targetItems = SearchItemAroundForLoot(ModConfigManager.GetSearchPickupRadius(), ModConfigManager.GetSearchContainers(), ModConfigManager.GetSearchContainersRadius(), ModConfigManager.GetSearchOtherContainers(), ModConfigManager.GetSearchOtherContainersRadius());
-                // 添加初始物品
-                if (targetItems.Count > 0)
-                {
-                    GenerateAndOpenRandomLoot(targetItems);
-                }
-                else
-                {
-                    //人物吐气泡说：不要找啦，周围没有散落物！
-                    Transform? mainTrans = DynamicLootBoxManager.GetMainTransform();
-                    if (null != mainTrans)
-                    {
-                        if (Time.time - lastBubbleTime < BUBBLES_TIME)
-                        {
-                            Debug.Log("气泡触发过于频繁，已忽略");
-                            return;
-                        }
-                        // 更新最后气泡时间
-                        lastBubbleTime = Time.time;
+            Debug.Log($"[LootNearbyItem] 按键触发: {searchKeyCode}, pickupRadius={ModConfigManager.GetSearchPickupRadius()}, searchContainers={ModConfigManager.GetSearchContainers()}, searchOtherContainers={ModConfigManager.GetSearchOtherContainers()}");
 
-                        // 扩大检索范围5倍，确认下附近有没有可拾取的物品
-                        if (SearchItemAroundForNotify(ModConfigManager.GetSearchPickupRadius() + DEFAULT_SEARCH_RADIUS * 4f,
-                                ModConfigManager.GetSearchContainers(),
-                                ModConfigManager.GetSearchContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f,
-                                ModConfigManager.GetSearchOtherContainers(),
-                                ModConfigManager.GetSearchOtherContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f))
-                        {
-                            DialogueBubblesManager.Show(LocalizationUtil.ItemOutOfRangeText, mainTrans, speed: 100f, duration: 1.2f);
-                        }
-                        else
-                        {
-                            DialogueBubblesManager.Show(LocalizationUtil.NoScatteredObjectsText, mainTrans, speed: 100f, duration: 1.2f);
-                        }
-                    }
-                }
-            }
-        }
-
-        private async void GenerateAndOpenRandomLoot(List<Item> randomItems)
-        {
-            if (null == DynamicLootBoxManager.Instance)
+            if (Time.time - lastHKeyPressTime < KEY_DEBOUNCE_TIME)
             {
-                Debug.Log("创建DynamicLootBoxManager!");
-                LevelManager.Instance.transform.AddComponent<DynamicLootBoxManager>();
-            }
-            if (null == DynamicLootBoxManager.Instance)
-            {
-                Debug.Log("创建DynamicLootBoxManager失败!");
+                Debug.Log("[LootNearbyItem] 按键触发过于频繁，已忽略");
                 return;
             }
+            lastHKeyPressTime = Time.time;
+
+            if (DynamicLootBoxManager.Instance != null && DynamicLootBoxManager.Instance.IsLootViewOpen())
+            {
+                Debug.Log("战利品界面已打开，忽略新请求");
+                return;
+            }
+
+            List<Item> items = SearchItemAroundForLoot(
+                ModConfigManager.GetSearchPickupRadius(),
+                ModConfigManager.GetSearchContainers(),
+                ModConfigManager.GetSearchContainersRadius(),
+                ModConfigManager.GetSearchOtherContainers(),
+                ModConfigManager.GetSearchOtherContainersRadius(),
+                ModConfigManager.GetSearchHiddenContainers(),
+                ModConfigManager.GetSearchHiddenContainersRadius());
+
+            if (items.Count > 0)
+            {
+                GenerateAndOpenRandomLoot(items).Forget();
+                return;
+            }
+
+            Transform mainTransform = DynamicLootBoxManager.GetMainTransform();
+            if (mainTransform == null) return;
+
+            if (Time.time - lastBubbleTime < BUBBLES_TIME)
+            {
+                Debug.Log("气泡触发过于频繁，已忽略");
+                return;
+            }
+            lastBubbleTime = Time.time;
+
+            bool hasNearby = SearchItemAroundForNotify(
+                ModConfigManager.GetSearchPickupRadius() + DEFAULT_SEARCH_RADIUS * 4f,
+                ModConfigManager.GetSearchContainers(),
+                ModConfigManager.GetSearchContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f,
+                ModConfigManager.GetSearchOtherContainers(),
+                ModConfigManager.GetSearchOtherContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f,
+                ModConfigManager.GetSearchHiddenContainers(),
+                ModConfigManager.GetSearchHiddenContainersRadius() + DEFAULT_SEARCH_RADIUS * 4f);
+
+            if (hasNearby)
+                DialogueBubblesManager.Show(LocalizationUtil.ItemOutOfRangeText, mainTransform, -1f, false, false, 100f, 1.2f).Forget();
+            else
+                DialogueBubblesManager.Show(LocalizationUtil.NoScatteredObjectsText, mainTransform, -1f, false, false, 100f, 1.2f).Forget();
+        }
+
+        private async UniTaskVoid GenerateAndOpenRandomLoot(List<Item> randomItems)
+        {
+            if (DynamicLootBoxManager.Instance == null)
+            {
+                Debug.Log("创建DynamicLootBoxManager!");
+                ComponentHolderProtocol.AddComponent<DynamicLootBoxManager>(LevelManager.Instance.transform);
+            }
+
+            if (DynamicLootBoxManager.Instance == null)
+            {
+                Debug.LogError("创建DynamicLootBoxManager失败!");
+                return;
+            }
+
             Debug.Log("创建新箱子!");
-            // 创建新箱子
             DynamicLootBoxManager.Instance.CreateNewHiddenLootBox();
 
-            // 添加物品
             Debug.Log("添加物品!");
             await DynamicLootBoxManager.Instance.AddItemsToBox(randomItems);
 
-            // 打开箱子
             Debug.Log("打开箱子!");
             DynamicLootBoxManager.Instance.OpenLootBox();
 
-            // 注册关闭事件
             Debug.Log("注册关闭事件!");
             DynamicLootBoxManager.Instance.OnBoxClosed += HandleBoxClosed;
         }
 
         private void HandleBoxClosed()
         {
-            Debug.Log($"箱子已经关闭，剩余物品已经丢出，箱子即将销毁");
-            if(null!= CacheTombBoxes && CacheTombBoxes.Count > 0)
+            Debug.Log("箱子已经关闭，剩余物品已经丢出，箱子即将销毁");
+
+            if (CacheTombBoxes != null && CacheTombBoxes.Count > 0)
             {
-                foreach (var box in CacheTombBoxes)
-                {
-                    TryFindDeathInfoAndTouch(box);
-                }
+                foreach (InteractableLootbox tombBox in CacheTombBoxes)
+                    TryFindDeathInfoAndTouch(tombBox);
             }
-            if(null != CacheLootBoxes && CacheLootBoxes.Count > 0)
+
+            if (CacheLootBoxes != null && CacheLootBoxes.Count > 0)
             {
-                // 每次搜索结束，同步触发box的互动结束
-                foreach (var box in CacheLootBoxes)
+                foreach (InteractableLootbox lootBox in CacheLootBoxes)
                 {
-                    box?.InternalStopInteract();
+                    if (lootBox != null)
+                        lootBox.InternalStopInteract();
                 }
                 CacheLootBoxes.Clear();
             }
+
             DynamicLootBoxManager.Instance.OnBoxClosed -= HandleBoxClosed;
         }
 
-        public static List<Item> SearchItemAroundForLoot(float pickupRadius, bool enableEnemyLootbox,
-                float enemyLootboxRadius, bool enableOtherLootbox, float otherLootboxRadius)
+        public static List<Item> SearchItemAroundForLoot(float pickupRadius, bool enableEnemyLootbox, float enemyLootboxRadius, bool enableOtherLootbox, float otherLootboxRadius, bool enableHiddenBox = false, float hiddenBoxRadius = 3f)
         {
-            Debug.Log($"LootNearbyItem search for loot pickupRadius {pickupRadius} enableEnemyLootbox {enableEnemyLootbox} enemyLootboxRadius  {enemyLootboxRadius} enableOtherLootbox {enableOtherLootbox} otherLootboxRadius {otherLootboxRadius}");
-            // 为应对极端场景，最大匹配数量提高到1000，然后取最近的大概不到175个物品
-            Collider[] colliders = new Collider[1000];
-            LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
-            CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
-            // 每次搜索清空缓存
+            Debug.Log($"LootNearbyItem search for loot pickupRadius {pickupRadius} enableEnemyLootbox {enableEnemyLootbox} enemyLootboxRadius {enemyLootboxRadius} enableOtherLootbox {enableOtherLootbox} otherLootboxRadius {otherLootboxRadius} enableHiddenBox {enableHiddenBox} hiddenBoxRadius {hiddenBoxRadius}");
+
+            Collider[] hits = new Collider[1000];
+            int layerMask = 1 << LayerMask.NameToLayer("Interactable");
+
+            LevelManager level = LevelManager.Instance;
+            CharacterMainControl main = level != null ? level.MainCharacter : null;
+
             CacheLootBoxes.Clear();
             CacheTombBoxes.Clear();
 
-            if (null == main || !main.IsMainCharacter)
-            {
+            if (main == null || !main.IsMainCharacter)
                 return new List<Item>();
-            }
 
-            float searchRadius = Math.Max(pickupRadius,
-                    Math.Max(enableEnemyLootbox ? enemyLootboxRadius : 0f,
-                             enableOtherLootbox ? otherLootboxRadius : 0f));
+            float maxRadius = Math.Max(pickupRadius, Math.Max(enableEnemyLootbox ? enemyLootboxRadius : 0f, enableOtherLootbox ? otherLootboxRadius : 0f));
+            if (enableHiddenBox) maxRadius = Math.Max(maxRadius, hiddenBoxRadius);
+            Vector3 searchCenter = main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f;
 
-            Vector3 mainPosition = main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f;
+            int hitCount = Physics.OverlapSphereNonAlloc(searchCenter, maxRadius, hits, layerMask);
+            if (hitCount <= 0) return new List<Item>();
 
-            // 实际搜索到的碰撞体数量
-            int num = Physics.OverlapSphereNonAlloc(mainPosition, searchRadius, colliders, interactLayers);
-            if (num <= 0)
+            // 按距离排序
+            float[] distances = new float[hitCount];
+            for (int i = 0; i < hitCount; i++)
+                distances[i] = Vector3.Distance(searchCenter, hits[i].ClosestPoint(searchCenter));
+            Array.Sort(distances, hits, 0, hitCount);
+
+            HashSet<Item> foundItems = new HashSet<Item>();
+
+            for (int i = 0; i < hitCount; i++)
             {
-                return new List<Item>();
-            }
+                Collider col = hits[i];
+                float dist = distances[i];
 
-            // 逐个计算距离和排序
-            float[] distances = new float[num];
-            for (int i = 0; i < num; i++)
-            {
-                Collider collider = colliders[i];
-                float distance = Vector3.Distance(mainPosition, collider.ClosestPoint(mainPosition));
-                distances[i] = distance;
-                // Debug.Log("collider distance: " + distance);
-            }
-            Array.Sort(distances, colliders, 0, num);
-
-            HashSet<Item> uniqueItems = new HashSet<Item>();
-            // 从近到远遍历处理可交互物品
-            for (int i = 0; i < num; i++)
-            {
-                Collider collider = colliders[i];
-                float distance = distances[i];
-                if (distance <= pickupRadius)
+                // 地面散落物
+                if (dist <= pickupRadius)
                 {
-                    InteractablePickup tmpPickup = collider.GetComponent<InteractablePickup>();
-                    if (null != tmpPickup)
+                    InteractablePickup pickup = col.GetComponent<InteractablePickup>();
+                    if (pickup != null)
                     {
-                        uniqueItems.Add(tmpPickup.ItemAgent.Item);
+                        Item item = GetItemFromPickup(pickup);
+                        if (item != null) foundItems.Add(item);
                     }
                 }
 
-                bool meetEnemyBox = enableEnemyLootbox && distance < enemyLootboxRadius;
-                bool meetOtherBox = enableOtherLootbox && distance < otherLootboxRadius;
+                bool isEnemyBox = enableEnemyLootbox && dist < enemyLootboxRadius;
+                bool isOtherBox = enableOtherLootbox && dist < otherLootboxRadius;
+                bool isHiddenBox = enableHiddenBox && dist < hiddenBoxRadius;
 
-                if (meetEnemyBox || meetOtherBox)
+                if (isEnemyBox || isOtherBox || isHiddenBox)
                 {
-                    InteractableLootbox tmpBox = collider.GetComponent<InteractableLootbox>();
-                    if (null != tmpBox)
+                    InteractableLootbox lootbox = col.GetComponent<InteractableLootbox>();
+                    if (lootbox != null)
                     {
-                        string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
-                        // Debug.Log($"find loot box name key {nameKey} meetEnemyBox{meetEnemyBox} meetOtherBox {meetOtherBox} requireItem {tmpBox.requireItem}");
+                        string displayKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(lootbox);
+                        bool isEnemyLoot = "UI_LootBox_Loot".Equals(displayKey);
+                        bool isHiddenLoot = "UI_LootBox_Hidden".Equals(displayKey);
+                        bool isOtherLoot = !isEnemyLoot && !isHiddenLoot && (
+                            (displayKey != null && displayKey.StartsWith("UI_LootBox"))
+                            || "UI_Interact_Cloth".Equals(displayKey)
+                            || "UI_Interact_Tomb".Equals(displayKey));
 
-                        bool isEnemyBox = "UI_LootBox_Loot".Equals(nameKey);
-                        bool isOtherBox = !isEnemyBox &&
-                                ((null != nameKey && nameKey.StartsWith("UI_LootBox"))
-                                || "UI_Interact_Cloth".Equals(nameKey)
-                                || "UI_Interact_Tomb".Equals(nameKey));
-                        // 处理击杀掉落的战利品盒子, 或者非击杀掉落且不需要物品条件的盒子
-                        if ((meetEnemyBox && isEnemyBox) || (meetOtherBox && !tmpBox.requireItem && isOtherBox))
+                        // 土堆/藏匿点不受requireItem限制
+                        bool canSearch = (isEnemyBox && isEnemyLoot)
+                            || (isOtherBox && !lootbox.requireItem && isOtherLoot)
+                            || (isHiddenBox && isHiddenLoot);
+
+                        if (canSearch)
                         {
-                            foreach (var item in tmpBox.Inventory)
+                            foreach (Item item in lootbox.Inventory)
                             {
-                                if (null != item)
-                                {
-                                    uniqueItems.Add(item);
-                                }
+                                if (item != null) foundItems.Add(item);
                             }
-                            // 如果后续是为了拾取，则提前标记好箱子状态为已搜索
-                            tmpBox.SetMarkerUsed();
-                            tmpBox.needInspect = false;
-                            tmpBox.Inventory.hasBeenInspectedInLootBox = true;
-                            CacheLootBoxes.Add(tmpBox);
-                            if ("UI_Interact_Tomb".Equals(nameKey))
-                            {
-                                CacheTombBoxes.Add(tmpBox);
-                            }
-                        }
+                            lootbox.SetMarkerUsed();
+                            lootbox.needInspect = false;
+                            lootbox.Inventory.hasBeenInspectedInLootBox = true;
+                            CacheLootBoxes.Add(lootbox);
 
+                            if ("UI_Interact_Tomb".Equals(displayKey))
+                                CacheTombBoxes.Add(lootbox);
+                        }
                     }
                 }
-                // 如果超出了单次搜索数量，提前结束搜索
-                if (uniqueItems.Count >= MAX_SEARCH_COUNT)
-                {
-                    break;
-                }
+
+                if (foundItems.Count >= MAX_SEARCH_COUNT) break;
             }
-            return uniqueItems.ToList();
+
+            return foundItems.ToList();
         }
 
-
-
-        public static bool SearchItemAroundForNotify(float pickupRadius, bool enableEnemyLootbox,
-                float enemyLootboxRadius, bool enableOtherLootbox, float otherLootboxRadius)
+        public static bool SearchItemAroundForNotify(float pickupRadius, bool enableEnemyLootbox, float enemyLootboxRadius, bool enableOtherLootbox, float otherLootboxRadius, bool enableHiddenBox = false, float hiddenBoxRadius = 3f)
         {
-            Debug.Log($"LootNearbyItem search for notify pickupRadius {pickupRadius} enableEnemyLootbox {enableEnemyLootbox} enemyLootboxRadius  {enemyLootboxRadius} enableOtherLootbox {enableOtherLootbox} otherLootboxRadius {otherLootboxRadius}");
-            // 为应对极端场景，最大匹配数量提高到1000，然后取最近的大概不到175个物品
-            Collider[] colliders = new Collider[1000];
-            LayerMask interactLayers = 1 << LayerMask.NameToLayer("Interactable");
-            CharacterMainControl? main = LevelManager.Instance?.MainCharacter;
+            Collider[] hits = new Collider[1000];
+            int layerMask = 1 << LayerMask.NameToLayer("Interactable");
 
-            if (null == main || !main.IsMainCharacter)
+            LevelManager level = LevelManager.Instance;
+            CharacterMainControl main = level != null ? level.MainCharacter : null;
+
+            if (main == null || !main.IsMainCharacter) return false;
+
+            float maxRadius = Math.Max(pickupRadius, Math.Max(enableEnemyLootbox ? enemyLootboxRadius : 0f, enableOtherLootbox ? otherLootboxRadius : 0f));
+            if (enableHiddenBox) maxRadius = Math.Max(maxRadius, hiddenBoxRadius);
+            Vector3 searchCenter = main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f;
+
+            int hitCount = Physics.OverlapSphereNonAlloc(searchCenter, maxRadius, hits, layerMask);
+            if (hitCount <= 0) return false;
+
+            for (int i = 0; i < hitCount; i++)
             {
-                return false;
-            }
-            float searchRadius = Math.Max(pickupRadius,
-                    Math.Max(enableEnemyLootbox ? enemyLootboxRadius : 0f,
-                             enableOtherLootbox ? otherLootboxRadius : 0f));
+                Collider col = hits[i];
+                float dist = Vector3.Distance(searchCenter, col.ClosestPoint(searchCenter));
 
-            Vector3 mainPosition = main.transform.position + Vector3.up * 0.5f + main.CurrentAimDirection * 0.2f;
-
-            // 实际搜索到的碰撞体数量
-            int num = Physics.OverlapSphereNonAlloc(mainPosition, searchRadius, colliders, interactLayers);
-            if (num <= 0)
-            {
-                return false;
-            }
-
-            // 从近到远遍历处理可交互物品
-            for (int i = 0; i < num; i++)
-            {
-                Collider collider = colliders[i];
-                float distance = Vector3.Distance(mainPosition, collider.ClosestPoint(mainPosition));
-
-                if (distance <= pickupRadius)
+                if (dist <= pickupRadius)
                 {
-                    InteractablePickup tmpPickup = collider.GetComponent<InteractablePickup>();
-                    if (null != tmpPickup)
-                    {
+                    InteractablePickup pickup = col.GetComponent<InteractablePickup>();
+                    if (pickup != null && GetItemFromPickup(pickup) != null)
                         return true;
-                    }
                 }
 
-                bool meetEnemyBox = enableEnemyLootbox && distance < enemyLootboxRadius;
-                bool meetOtherBox = enableOtherLootbox && distance < otherLootboxRadius;
+                bool isEnemyBox = enableEnemyLootbox && dist < enemyLootboxRadius;
+                bool isOtherBox = enableOtherLootbox && dist < otherLootboxRadius;
+                bool isHiddenBox = enableHiddenBox && dist < hiddenBoxRadius;
 
-                if (meetEnemyBox || meetOtherBox)
+                if (!isEnemyBox && !isOtherBox && !isHiddenBox) continue;
+
+                InteractableLootbox lootbox = col.GetComponent<InteractableLootbox>();
+                if (lootbox == null) continue;
+
+                string displayKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(lootbox);
+                bool isEnemyLoot = "UI_LootBox_Loot".Equals(displayKey);
+                bool isHiddenLoot = "UI_LootBox_Hidden".Equals(displayKey);
+                bool isOtherLoot = !isEnemyLoot && !isHiddenLoot && (
+                    (displayKey != null && displayKey.StartsWith("UI_LootBox"))
+                    || "UI_Interact_Cloth".Equals(displayKey)
+                    || "UI_Interact_Tomb".Equals(displayKey));
+
+                bool canSearch = (isEnemyBox && isEnemyLoot)
+                    || (isOtherBox && !lootbox.requireItem && isOtherLoot)
+                    || (isHiddenBox && isHiddenLoot);
+
+                if (!canSearch) continue;
+
+                foreach (Item item in lootbox.Inventory)
                 {
-                    InteractableLootbox tmpBox = collider.GetComponent<InteractableLootbox>();
-                    if (null != tmpBox)
-                    {
-                        string nameKey = (string)DynamicLootBoxManager.LootboxDisplayNameKeyField.GetValue(tmpBox);
-                        // Debug.Log($"find loot box for notify name key {nameKey} meetEnemyBox{meetEnemyBox} meetOtherBox {meetOtherBox} requireItem {tmpBox.requireItem}");
-
-                        bool isEnemyBox = "UI_LootBox_Loot".Equals(nameKey);
-                        bool isOtherBox = !isEnemyBox &&
-                                ((null != nameKey && nameKey.StartsWith("UI_LootBox"))
-                                || "UI_Interact_Cloth".Equals(nameKey)
-                                || "UI_Interact_Tomb".Equals(nameKey));
-                        // 处理击杀掉落的战利品盒子, 或者非击杀掉落且不需要物品条件的盒子
-                        if ((meetEnemyBox && isEnemyBox) || (meetOtherBox && !tmpBox.requireItem && isOtherBox))
-                        {
-                            foreach (var item in tmpBox.Inventory)
-                            {
-                                if (null != item)
-                                {
-                                    return true;
-                                }
-                            }
-                        }
-
-                    }
+                    if (item != null) return true;
                 }
             }
             return false;
         }
 
+        /// <summary>
+        /// 安全地从InteractablePickup获取Item，处理DuckovItemAgent类型
+        /// </summary>
+        private static Item GetItemFromPickup(InteractablePickup pickup)
+        {
+            if (pickup == null) return null;
+            try
+            {
+                object agent = pickup.ItemAgent;
+                if (agent == null) return null;
+
+                // 尝试通过属性获取Item
+                PropertyInfo itemProp = agent.GetType().GetProperty("Item", BindingFlags.Public | BindingFlags.Instance);
+                if (itemProp != null)
+                    return itemProp.GetValue(agent) as Item;
+
+                // 尝试直接转换
+                if (agent is ItemAgent itemAgent)
+                    return itemAgent.Item;
+
+                Debug.LogWarning($"无法从 {agent.GetType().Name} 获取Item");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"GetItemFromPickup error: {ex.Message}");
+                return null;
+            }
+        }
+
         private void TryFindDeathInfoAndTouch(InteractableLootbox box)
         {
-            if(null == DeadBodyManager.Instance)
+            if (DeadBodyManager.Instance == null) return;
+
+            List<DeadBodyManager.DeathInfo> deaths = DeadBodyManagerDeathInfosField.GetValue(DeadBodyManager.Instance) as List<DeadBodyManager.DeathInfo>;
+            if (deaths == null) return;
+
+            int checkCount = 10;
+            foreach (DeadBodyManager.DeathInfo info in deaths.AsEnumerable().Reverse())
             {
-                return;
-            }
-            List<DeathInfo> deaths = (List<DeathInfo>)DeadBodyManagerDeathInfosField.GetValue(DeadBodyManager.Instance);
-            if(null == deaths)
-            {
-                return;
-            }
-            // 只查找最近10次死亡记录
-            int maxCnt = 10;
-            foreach (var death in deaths.AsEnumerable().Reverse())
-            {
-                if(null != death && death.worldPosition == box.transform.position)
+                if (info != null && info.worldPosition == box.transform.position)
                 {
-                    death.touched = true;
-                    return;
+                    info.touched = true;
+                    break;
                 }
-                if (maxCnt-- < 0)
-                {
-                    return;
-                }
+                if (checkCount-- < 0) break;
             }
         }
     }

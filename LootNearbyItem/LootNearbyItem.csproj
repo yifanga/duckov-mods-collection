@@ -1,29 +1,39 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
-    <!-- This should be the folder that contains Duckov.exe -->
-    <!-- 下面这行里填写你的鸭科夫安装路径，这样编译器就能找到相关的dll文件 -->
-    <DuckovPath>E:\Steam\steamapps\common\Escape from Duckov</DuckovPath>
+    <Nullable>disable</Nullable>
+    <LangVersion>9.0</LangVersion>
+    <AssemblyName>LootNearbyItem</AssemblyName>
+    <RootNamespace>LootNearbyItem</RootNamespace>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <DuckovManagedPath>E:\steam\steamapps\common\Escape from Duckov\Duckov_Data\Managed</DuckovManagedPath>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="$(DuckovPath)\Duckov_Data\Managed\TeamSoda.*">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="$(DuckovPath)\Duckov_Data\Managed\ItemStatsSystem.dll">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="$(DuckovPath)\Duckov_Data\Managed\Unity*">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="$(DuckovPath)\Duckov_Data\Managed\SodaLocalization.dll">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="$(DuckovPath)\Duckov_Data\Managed\UniTask*">
-      <Private>False</Private>
-    </Reference>
+    <PackageReference Include="Lib.Harmony" Version="2.4.1" PrivateAssets="all" />
   </ItemGroup>
-  <!-- <ItemGroup>
-    <PackageReference Include="Lib.Harmony" Version="2.4.1" />
-  </ItemGroup> -->
+
+  <ItemGroup>
+    <Reference Include="$(DuckovManagedPath)\TeamSoda.Duckov.Core.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\TeamSoda.Duckov.Utilities.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\ItemStatsSystem.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\SodaLocalization.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.UIModule.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.IMGUIModule.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.InputLegacyModule.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.AnimationModule.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\Unity.VisualScripting.Core.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UnityEngine.JSONSerializeModule.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UniTask.dll" Private="false" />
+    <Reference Include="$(DuckovManagedPath)\UniTask.Linq.dll" Private="false" />
+  </ItemGroup>
+
 </Project>

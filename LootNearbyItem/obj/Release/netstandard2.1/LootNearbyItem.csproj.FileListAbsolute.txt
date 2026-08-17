@@ -1,0 +1,10 @@
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\obj\Release\netstandard2.1\LootNearbyItem.csproj.AssemblyReference.cache
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\obj\Release\netstandard2.1\LootNearbyItem.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\obj\Release\netstandard2.1\LootNearbyItem.AssemblyInfoInputs.cache
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\obj\Release\netstandard2.1\LootNearbyItem.AssemblyInfo.cs
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\obj\Release\netstandard2.1\LootNearbyItem.csproj.CoreCompileInputs.cache
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\bin\Release\netstandard2.1\LootNearbyItem.deps.json
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\bin\Release\netstandard2.1\LootNearbyItem.dll
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\bin\Release\netstandard2.1\LootNearbyItem.pdb
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\obj\Release\netstandard2.1\LootNearbyItem.dll
+C:\Users\pfdrsa\Doubao\chats\2026-08-15\new-chat\mod_project\LootNearbyItem\obj\Release\netstandard2.1\LootNearbyItem.pdb

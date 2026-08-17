@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "+3WLVs4UZDA=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\pfdrsa\\Doubao\\chats\\2026-08-15\\new-chat\\mod_project\\LootNearbyItem\\LootNearbyItem.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\pfdrsa\\.nuget\\packages\\lib.harmony\\2.4.1\\lib.harmony.2.4.1.nupkg.sha512",
+    "C:\\Users\\pfdrsa\\.nuget\\packages\\lib.harmony.ref\\2.4.1\\lib.harmony.ref.2.4.1.nupkg.sha512",
+    "C:\\Users\\pfdrsa\\.nuget\\packages\\system.reflection.emit\\4.7.0\\system.reflection.emit.4.7.0.nupkg.sha512"
+  ],
+  "logs": []
+}
